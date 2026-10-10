@@ -1,0 +1,18 @@
+{
+  "name": "Prism Pop — Match-3 Gem Puzzle",
+  "short_name": "Prism Pop",
+  "description": "Match gems, chain combos, make power gems. No lives, no waiting.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#140A2E",
+  "theme_color": "#140A2E",
+  "categories": ["games", "puzzle"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

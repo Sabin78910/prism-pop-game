@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Prism Pop</string>
+    <string name="title_activity_main">Prism Pop</string>
+    <string name="package_name">com.sabinkhanal.prismpop</string>
+    <string name="custom_url_scheme">com.sabinkhanal.prismpop</string>
+</resources>
