@@ -33,21 +33,36 @@ export async function syncOnce(
   throw new Error("Sync kept conflicting");
 }
 
-const CODE_KEY = "prism-pop-sync-code";
+/** Shared by every Sabin Labs web app on this origin: sign in once on the hub, synced everywhere. */
+export const SHARED_CODE_KEY = "sabin-labs-sync-code";
+const LEGACY_CODE_KEY = "prism-pop-sync-code";
 const APP_ID = "prism-pop";
 
-function readCode(): string | null {
+type KV = Pick<Storage, "getItem" | "setItem" | "removeItem">;
+const store = (): KV | undefined => (typeof localStorage !== "undefined" ? localStorage : undefined);
+
+/** Reads the shared Sabin Labs ID, migrating a code saved by older versions of this game. */
+export function readCode(s: KV | undefined = store()): string | null {
   try {
-    return localStorage.getItem(CODE_KEY);
+    const shared = s?.getItem(SHARED_CODE_KEY);
+    if (shared && parseSyncCode(shared)) return shared;
+    const legacy = s?.getItem(LEGACY_CODE_KEY);
+    if (legacy && parseSyncCode(legacy)) {
+      s?.setItem(SHARED_CODE_KEY, legacy);
+      s?.removeItem(LEGACY_CODE_KEY);
+      return legacy;
+    }
+    return null;
   } catch {
     return null;
   }
 }
 
-function writeCode(code: string | null): void {
+export function writeCode(code: string | null, s: KV | undefined = store()): void {
   try {
-    if (code) localStorage.setItem(CODE_KEY, code);
-    else localStorage.removeItem(CODE_KEY);
+    if (code) s?.setItem(SHARED_CODE_KEY, code);
+    else s?.removeItem(SHARED_CODE_KEY);
+    s?.removeItem(LEGACY_CODE_KEY);
   } catch {
     /* storage blocked: sync stays on for this session only */
   }
@@ -55,7 +70,7 @@ function writeCode(code: string | null): void {
 
 /** Keeps progress in sync across devices with an end-to-end encrypted sync code. */
 export function useProgressSync(progress: Progress, setProgress: (p: Progress) => void) {
-  const [code, setCode] = useState<string | null>(readCode);
+  const [code, setCode] = useState<string | null>(() => readCode());
   const [status, setStatus] = useState<SyncStatus>(code ? "syncing" : "off");
   const [lastSynced, setLastSynced] = useState<number | null>(null);
   const latest = useRef(progress);

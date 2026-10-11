@@ -1,6 +1,6 @@
 import { mergeProgress, newProgress, recordDaily, recordWin, type Progress } from "./game/progress";
 import { newSyncCode, parseSyncCode } from "./sync";
-import { syncOnce, type SyncTransport } from "./useProgressSync";
+import { readCode, SHARED_CODE_KEY, syncOnce, writeCode, type SyncTransport } from "./useProgressSync";
 
 /** In-memory stand-in for the sync server, with optimistic versions like the real one. */
 function fakeServer() {
@@ -112,5 +112,35 @@ describe("sync codes", () => {
     expect(parseSyncCode(code)).not.toBeNull();
     expect(parseSyncCode(`  ${code}  `)).not.toBeNull();
     expect(parseSyncCode("SS1-short")).toBeNull();
+  });
+});
+
+describe("shared Sabin Labs ID", () => {
+  const mem = () => {
+    const m = new Map<string, string>();
+    return { m, getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v), removeItem: (k: string) => void m.delete(k) };
+  };
+  it("uses the code saved by the Sabin Labs hub", () => {
+    const s = mem();
+    const code = newSyncCode();
+    s.setItem(SHARED_CODE_KEY, code);
+    expect(readCode(s)).toBe(code);
+  });
+  it("migrates a code saved by older versions of the game", () => {
+    const s = mem();
+    const code = newSyncCode();
+    s.setItem("prism-pop-sync-code", code);
+    expect(readCode(s)).toBe(code);
+    expect(s.m.get(SHARED_CODE_KEY)).toBe(code);
+    expect(s.m.has("prism-pop-sync-code")).toBe(false);
+  });
+  it("ignores invalid stored codes and clears on sign-out", () => {
+    const s = mem();
+    s.setItem(SHARED_CODE_KEY, "junk");
+    expect(readCode(s)).toBeNull();
+    writeCode(newSyncCode(), s);
+    expect(readCode(s)).not.toBeNull();
+    writeCode(null, s);
+    expect(readCode(s)).toBeNull();
   });
 });
