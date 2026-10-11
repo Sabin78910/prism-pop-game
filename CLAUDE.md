@@ -37,4 +37,4 @@ Design: night violet #140A2E, six gem colours each with its own shape, Fredoka d
   game. Each gem colour keeps a distinct shape so colour-blind players can tell them apart.
 
 ## Done when
-Lint clean, tests pass, CI green, PR opened with a three line summary.
+Lint clean, tests pass, CI green, PR opened with a three line summary. User facing work follows `docs/FEEL.md`.
