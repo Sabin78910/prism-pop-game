@@ -1,24 +1,40 @@
 # Prism Pop
-Purpose: Original match-3 gem puzzle (React, TS, Vite, Canvas 2D). Web PWA + Android via Capacitor.
+Original match-3 gem puzzle. No lives, no energy timers, no forced ads.
+
+## Stack
+React 19 · TypeScript (strict) · Vite · Vitest · ESLint. Installable PWA with offline support.
+Design: night violet #140A2E, six gem colours each with its own shape, Fredoka display.
 
 ## Commands
-- Test: `npm test`
-- Lint: `npm run lint && npm run typecheck`
-- Build: `npm run build`
+- Dev: `npm run dev` · Build: `npm run build`
+- Test: `npm test` · Lint: `npm run lint && npm run typecheck`
 
 ## Architecture
-- src/game/ — pure engine: board.ts (matches, hints, shuffle), resolve.ts (moves, specials, cascades),
-  level.ts (seeded procedural levels + daily), session.ts (one level's state), progress.ts (save data). All tested.
-- src/GameCanvas.tsx — renderer + input (canvas, sprites, particles); src/App.tsx — screens; src/audio.ts — synth SFX.
+- `src/game/` pure engine: board, resolve, level, session, progress · `src/GameCanvas.tsx` render and input
 
-## Rules
-- Read only the files you need; do not scan the whole repo.
-- Every behavior change needs a test. Run tests and lint before finishing.
-- Fair design: no lives/energy system, no forced ads, respect reduced motion. Never copy art or names from other games.
-- No new dependencies, permissions, or signing/secrets changes without asking.
-- Never commit secrets, keystores, .env files, or email addresses.
-- Keep PRs under ~300 changed lines; one issue per PR.
-- If tests still fail after 3 attempts, stop and report the blocker.
+## Data rules
+- Progress is in localStorage; `mergeProgress` must never lose a level, star or coin.
+- Cross-device sync uses the shared Sabin Labs ID: the sync code in localStorage key `sabin-labs-sync-code`,
+  shared by every app on sabin78910.github.io. Never log it or send it anywhere but sync-api.
 
-## Definition of done
-Lint clean, tests pass, CI green, short summary, PR opened as draft.
+## Testing rules
+- Every behaviour change needs a test. Pure logic in `src/*.ts` is unit-tested; components get the
+  behaviour test, not the markup. Run lint, typecheck and tests before finishing.
+
+## Frontend rules
+- Keep the existing design system, dark-first with a working light theme. Editorial layouts, not dashboard
+  grids. Respect `prefers-reduced-motion`, keep AA contrast and 44px targets.
+- Self-host fonts with @fontsource; a Google Fonts link blocks first paint and costs ~2s on mobile.
+- Keep gzipped JS under ~180KB and Lighthouse mobile performance at 90+.
+
+## Security and git
+- Never commit secrets, keystores, .env files or email addresses.
+- Keep the Content-Security-Policy strict; add a host to connect-src only when a feature needs it.
+- `main` is protected: branch, open a PR, merge when CI is green. One issue per PR, under ~300 lines.
+
+## Game rules
+- Fair by design: no lives, no energy wall, no forced ads. Never copy art or names from another
+  game. Each gem colour keeps a distinct shape so colour-blind players can tell them apart.
+
+## Done when
+Lint clean, tests pass, CI green, PR opened with a three line summary.
