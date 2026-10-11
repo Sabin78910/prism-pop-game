@@ -29,6 +29,8 @@ import {
 import type { Level, Pos } from "./game/types";
 import { num, t, type Lang } from "./i18n";
 import { useInstallPrompt } from "./install";
+import { SyncPanel } from "./SyncPanel";
+import { useProgressSync } from "./useProgressSync";
 
 type Screen = "home" | "map" | "game";
 
@@ -105,6 +107,7 @@ export default function App() {
   }, [settings]);
 
   useEffect(() => saveProgress(storage, progress), [progress]);
+  const sync = useProgressSync(progress, setProgress);
 
   // Score counts up smoothly instead of jumping.
   useEffect(() => {
@@ -228,6 +231,15 @@ export default function App() {
             ))}
           </div>
         </div>
+        <SyncPanel
+          lang={lang}
+          code={sync.code}
+          status={sync.status}
+          onTurnOn={sync.turnOn}
+          onUseCode={sync.useCode}
+          onSyncNow={() => void sync.syncNow()}
+          onTurnOff={sync.turnOff}
+        />
         <button
           className="btn btn--ghost"
           onClick={() => {
