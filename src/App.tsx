@@ -29,6 +29,7 @@ import {
 import type { Level, Pos } from "./game/types";
 import { num, t, type Lang } from "./i18n";
 import { useInstallPrompt } from "./install";
+import { GoogleSignIn } from "./GoogleSignIn";
 import { SyncPanel } from "./SyncPanel";
 import { useProgressSync } from "./useProgressSync";
 
@@ -231,6 +232,14 @@ export default function App() {
             ))}
           </div>
         </div>
+        <GoogleSignIn
+          labels={{
+            signIn: t(lang, "googleSignIn"),
+            signedInAs: t(lang, "googleSignedIn", { name: "{name}" }),
+            signOut: t(lang, "googleSignOut"),
+            failed: t(lang, "googleFailed"),
+          }}
+        />
         <SyncPanel
           lang={lang}
           code={sync.code}

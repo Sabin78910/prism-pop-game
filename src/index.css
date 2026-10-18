@@ -739,3 +739,15 @@ input:focus-visible {
   color: #ffb3c1;
   font-size: 14px;
 }
+
+.google {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+}
+.google__error {
+  color: var(--danger, #ff8a8a);
+  margin: 0;
+}
