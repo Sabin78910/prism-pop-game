@@ -739,3 +739,15 @@ input:focus-visible {
   color: #ffb3c1;
   font-size: 14px;
 }
+
+.trophies h3 { margin: 8px 0 4px; font-size: 1rem; }
+.trophies ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; text-align: left; }
+.trophies li { min-height: 32px; display: flex; align-items: center; gap: 8px; opacity: 0.65; }
+.trophies li.on { opacity: 1; font-weight: 600; }
+
+.missions { width: 100%; max-width: 420px; margin: 12px auto 0; padding: 12px 14px; border-radius: 18px; text-align: left; }
+.missions h3 { margin: 0 0 6px; font-size: 1rem; }
+.mission { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 44px; font-size: 0.9rem; }
+.mission--done > span { font-weight: 700; }
+.mission .btn--small { min-height: 36px; padding: 4px 12px; white-space: nowrap; }
+.mission .btn--small:disabled { opacity: 0.5; }
