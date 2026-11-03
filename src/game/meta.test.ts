@@ -10,7 +10,7 @@ import {
   saveProgress,
   spendBooster,
 } from "./progress";
-import { coinReward, countIce, FINALE_MAX, objectiveProgress, playFinale, startSession, starsFor, swap, useBooster } from "./session";
+import { coinReward, countIce, FINALE_MAX, goalStatus, objectiveProgress, playFinale, startSession, starsFor, swap, useBooster } from "./session";
 
 describe("makeLevel", () => {
   it("is deterministic", () => {
@@ -208,5 +208,28 @@ describe("progress", () => {
     store.set("prism-pop-progress-v1", "{bad json");
     expect(loadProgress(storage)).toEqual(newProgress());
     expect(loadProgress(undefined)).toEqual(newProgress());
+  });
+});
+
+describe("goal status for the HUD", () => {
+  it("counts down what is left and marks done", () => {
+    const s = startSession(makeLevel(3));
+    expect(s.level.objective.kind).toBe("collect");
+    const g = goalStatus(s);
+    expect(g.left).toBe(g.total);
+    expect(g.done).toBe(false);
+    s.collected[g.color!] = g.total + 5;
+    expect(goalStatus(s)).toMatchObject({ left: 0, done: true });
+  });
+  it("shows points still needed on score levels", () => {
+    const s = startSession(makeLevel(1));
+    s.score = 1000;
+    const g = goalStatus(s);
+    expect(g.kind).toBe("score");
+    expect(g.left).toBe(g.total - 1000);
+  });
+  it("uses frozen gems left on ice levels", () => {
+    const s = startSession(makeLevel(31));
+    expect(goalStatus(s)).toMatchObject({ kind: "ice", left: s.iceLeft, done: false });
   });
 });

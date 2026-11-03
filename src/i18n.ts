@@ -106,6 +106,15 @@ const en = {
   boardTheme: "Board theme",
   themeClassic: "Classic",
   themeLocked: "Finish {world} to unlock",
+  goals: "Goals",
+  cancel: "Cancel",
+  erase: "Erase",
+  ready: "Ready?",
+  goalLabel_score: "Score {n}",
+  goalLabel_collect: "{n} {gem} left",
+  goalLabel_jelly: "{n} jelly left",
+  goalLabel_ice: "{n} frozen left",
+  playLevel: "Level {n}",
   privacy: "Privacy",
 };
 
@@ -215,6 +224,15 @@ const ne: typeof en = {
   boardTheme: "बोर्डको रूप",
   themeClassic: "पुरानो",
   themeLocked: "खोल्न {world} पूरा गर्नुहोस्",
+  goals: "लक्ष्य",
+  cancel: "रद्द",
+  erase: "मेटाउनुहोस्",
+  ready: "तयार?",
+  goalLabel_score: "{n} अंक",
+  goalLabel_collect: "{n} {gem} बाँकी",
+  goalLabel_jelly: "{n} जेली बाँकी",
+  goalLabel_ice: "{n} जमेका बाँकी",
+  playLevel: "तह {n}",
   privacy: "गोपनीयता",
 };
 

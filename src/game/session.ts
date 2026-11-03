@@ -150,3 +150,26 @@ export function useBooster(s: Session, booster: Booster, at?: Pos): TurnResult {
 export function coinReward(stars: number, movesLeft: number): number {
   return stars * 10 + movesLeft * 2;
 }
+
+/** What the HUD shows for the level goal: how many are left out of how many. */
+export interface GoalStatus {
+  kind: "score" | "collect" | "jelly" | "ice";
+  color?: number;
+  left: number;
+  total: number;
+  done: boolean;
+}
+
+export function goalStatus(s: Session): GoalStatus {
+  const o = s.level.objective;
+  if (o.kind === "score") {
+    const left = Math.max(0, o.target - s.score);
+    return { kind: "score", left, total: o.target, done: left === 0 };
+  }
+  if (o.kind === "collect") {
+    const left = Math.max(0, o.count - s.collected[o.color]);
+    return { kind: "collect", color: o.color, left, total: o.count, done: left === 0 };
+  }
+  const left = o.kind === "ice" ? s.iceLeft : s.jellyLeft;
+  return { kind: o.kind, left, total: o.count, done: left === 0 };
+}

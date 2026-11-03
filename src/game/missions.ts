@@ -64,3 +64,8 @@ export function saveMissions(storage: Pick<Storage, "setItem"> | undefined, m: M
     // Storage full or blocked: missions stay in memory for this session.
   }
 }
+
+/** Missions finished but not yet claimed, for the badge on the Goals tab. */
+export function claimableCount(m: Missions): number {
+  return MISSION_IDS.filter((id) => missionDone(m, id) && !m.claimed[id]).length;
+}
