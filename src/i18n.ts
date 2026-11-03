@@ -103,6 +103,9 @@ const en = {
   assistChip: "+{n} assist",
   assistNext: "Your next try starts with {n} extra moves.",
   assistWhy: "You've tried this level a few times, so it starts with extra moves. Turn this off in Settings.",
+  boardTheme: "Board theme",
+  themeClassic: "Classic",
+  themeLocked: "Finish {world} to unlock",
   privacy: "Privacy",
 };
 
@@ -209,6 +212,9 @@ const ne: typeof en = {
   assistChip: "+{n} सहयोग",
   assistNext: "अर्को प्रयास {n} थप चालसहित सुरु हुन्छ।",
   assistWhy: "तपाईंले यो तह केही पटक खेल्नुभयो, त्यसैले थप चालसहित सुरु हुन्छ। सेटिङमा बन्द गर्न सकिन्छ।",
+  boardTheme: "बोर्डको रूप",
+  themeClassic: "पुरानो",
+  themeLocked: "खोल्न {world} पूरा गर्नुहोस्",
   privacy: "गोपनीयता",
 };
 
