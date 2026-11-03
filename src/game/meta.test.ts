@@ -10,7 +10,7 @@ import {
   saveProgress,
   spendBooster,
 } from "./progress";
-import { coinReward, objectiveProgress, startSession, starsFor, swap, useBooster } from "./session";
+import { coinReward, FINALE_MAX, objectiveProgress, playFinale, startSession, starsFor, swap, useBooster } from "./session";
 
 describe("makeLevel", () => {
   it("is deterministic", () => {
@@ -111,6 +111,35 @@ describe("session", () => {
     s.score = s.level.stars[1];
     expect(starsFor(s.level, s.score)).toBe(2);
     expect(objectiveProgress(s)).toBe(1);
+  });
+  it("plays a finale on a win: more score, same moves, nothing while playing", () => {
+    const s = startSession(makeLevel(1));
+    expect(playFinale(s)).toEqual([]);
+    s.status = "won";
+    s.movesLeft = 6;
+    const before = s.score;
+    const steps = playFinale(s);
+    expect(steps.length).toBeGreaterThan(0);
+    expect(steps[0].blasts.length).toBeGreaterThanOrEqual(6);
+    expect(s.score).toBeGreaterThan(before);
+    expect(s.movesLeft).toBe(6);
+    expect(s.grid.flat().every((x) => x !== null)).toBe(true);
+  });
+  it("caps the finale so it stays short", () => {
+    const s = startSession(makeLevel(1));
+    s.status = "won";
+    s.movesLeft = 40;
+    const steps = playFinale(s);
+    expect(steps[0].blasts.length).toBeLessThanOrEqual(FINALE_MAX + s.grid.length * s.grid[0].length);
+    expect(steps.length).toBeGreaterThan(0);
+  });
+  it("a winning swap includes the finale steps", () => {
+    const s = startSession(makeLevel(1));
+    s.score = s.level.stars[0] - 1; // level 1 is a score goal; any clear wins
+    const [a, b] = findHint(s.grid)!;
+    const res = swap(s, a, b);
+    expect(s.status).toBe("won");
+    expect(res.steps.some((st) => st.blasts.length >= Math.min(FINALE_MAX, s.movesLeft))).toBe(true);
   });
   it("rewards coins for stars and spare moves", () => {
     expect(coinReward(3, 4)).toBe(38);
