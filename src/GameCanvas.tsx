@@ -201,6 +201,22 @@ export function GameCanvas(props: Props) {
           const img = gemSprite(gem.color, gem.special, spriteSize);
           // Squash anchors at the bottom of the cell so the gem looks like it lands, not shrinks.
           ctx.drawImage(img, ox + sp.x * cell + (cell - w) / 2, oy + sp.y * cell + cell - (cell - spriteSize * sc) / 2 - h, w, h);
+          if (gem.ice) {
+            // Frosted block over the gem; a second layer is thicker. White rim keeps it readable without colour.
+            const ix = ox + sp.x * cell + 3;
+            const iy = oy + sp.y * cell + 3;
+            ctx.fillStyle = gem.ice > 1 ? "rgba(190,230,255,0.62)" : "rgba(190,230,255,0.38)";
+            ctx.strokeStyle = "rgba(255,255,255,0.9)";
+            ctx.lineWidth = gem.ice > 1 ? 3 : 1.5;
+            ctx.beginPath();
+            ctx.roundRect(ix, iy, cell - 6, cell - 6, cell * 0.16);
+            ctx.fill();
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(ix + cell * 0.18, iy + cell * 0.22);
+            ctx.lineTo(ix + cell * 0.38, iy + cell * 0.1);
+            ctx.stroke();
+          }
         }
       }
       if (s.swapAnim) {
@@ -269,6 +285,13 @@ export function GameCanvas(props: Props) {
           s.particles.push({ x: pos.c + 0.5, y: pos.r + 0.5, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 0.002, life: 1, color, size: 0.6 + Math.random() * 0.8 });
         }
         s.sprites.delete(gem.id);
+      }
+      for (const { pos } of step.thawed) {
+        for (let i = 0; i < (fast ? 2 : 6); i++) {
+          const a = Math.random() * Math.PI * 2;
+          const v = 0.002 + Math.random() * 0.003;
+          s.particles.push({ x: pos.c + 0.5, y: pos.r + 0.5, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 0.002, life: 1, color: "#dff4ff", size: 0.5 + Math.random() * 0.6 });
+        }
       }
       if (step.blasts.length) {
         s.shake = Math.min(1.5, s.shake + 0.6 * step.blasts.length);

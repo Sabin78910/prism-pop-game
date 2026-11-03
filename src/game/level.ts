@@ -17,7 +17,9 @@ const PATTERNS: string[][] = [
 export function makeLevel(n: number, seed = hashString(`prism-pop-level-${n}`)): Level {
   const rng = createRng(seed);
   const colors = n < 6 ? 4 : n < 20 ? 5 : 6;
-  const kind = n <= 2 ? "score" : (["collect", "jelly", "score"] as const)[n % 3];
+  // From level 9, every fifth level is an ice level.
+  const kind = n >= 9 && n % 5 === 4 ? "ice" : n <= 2 ? "score" : (["collect", "jelly", "score"] as const)[n % 3];
+  let ice: number[][] | undefined;
   let jelly = Array.from({ length: ROWS }, () => Array<number>(COLS).fill(0));
   let objective: Objective;
   let moves: number;
@@ -27,6 +29,12 @@ export function makeLevel(n: number, seed = hashString(`prism-pop-level-${n}`)):
     const count = jelly.flat().filter((x) => x > 0).length;
     objective = { kind: "jelly", count };
     moves = 22 + Math.round(count / 4);
+  } else if (kind === "ice") {
+    const pattern = PATTERNS[(n + randInt(rng, PATTERNS.length)) % PATTERNS.length];
+    ice = pattern.map((row) => [...row].map((ch) => (ch === "." ? 0 : Math.min(Number(ch), n < 30 ? 1 : 2))));
+    const count = ice.flat().filter((x) => x > 0).length;
+    objective = { kind: "ice", count };
+    moves = 26 + Math.round(count / 2);
   } else if (kind === "collect") {
     const count = 18 + Math.min(42, Math.floor(n * 1.2));
     objective = { kind: "collect", color: randInt(rng, colors), count };
@@ -48,6 +56,7 @@ export function makeLevel(n: number, seed = hashString(`prism-pop-level-${n}`)):
     moves,
     objective,
     jelly,
+    ...(ice ? { ice } : {}),
     stars: [base, Math.round(base * 1.6), Math.round(base * 2.3)],
   };
 }

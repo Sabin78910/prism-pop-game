@@ -12,6 +12,7 @@ export interface Session {
   score: number;
   collected: number[]; // per colour
   jellyLeft: number;
+  iceLeft: number;
   status: "playing" | "won" | "lost";
   bestCombo: number;
 }
@@ -19,7 +20,7 @@ export interface Session {
 export function startSession(level: Level): Session {
   const rng = createRng(level.seed ^ 0x9e3779b9);
   const ctx: ResolveContext = { rng, colors: level.colors, jelly: level.jelly.map((r) => r.slice()), nextId: 1 };
-  const grid = createGrid(level.rows, level.cols, level.colors, rng, ctx);
+  const grid = freeze(createGrid(level.rows, level.cols, level.colors, rng, ctx), level.ice);
   return {
     level,
     grid,
@@ -28,9 +29,21 @@ export function startSession(level: Level): Session {
     score: 0,
     collected: Array(level.colors).fill(0),
     jellyLeft: countJelly(ctx.jelly),
+    iceLeft: countIce(grid),
     status: "playing",
     bestCombo: 0,
   };
+}
+
+/** Puts the level's starting ice on the gems. */
+function freeze(grid: Grid, ice: number[][] | undefined): Grid {
+  if (!ice) return grid;
+  return grid.map((row, r) => row.map((g, c) => (g && ice[r]?.[c] ? { ...g, ice: ice[r][c] } : g)));
+}
+
+/** Frozen gems still on the board. */
+export function countIce(grid: Grid): number {
+  return grid.flat().filter((g) => g?.ice).length;
 }
 
 export function countJelly(jelly: number[][]): number {
@@ -42,7 +55,8 @@ export function objectiveProgress(s: Session): number {
   const o = s.level.objective;
   if (o.kind === "score") return Math.min(1, s.score / o.target);
   if (o.kind === "collect") return Math.min(1, s.collected[o.color] / o.count);
-  return o.count === 0 ? 1 : Math.min(1, (o.count - s.jellyLeft) / o.count);
+  const left = o.kind === "ice" ? s.iceLeft : s.jellyLeft;
+  return o.count === 0 ? 1 : Math.min(1, (o.count - left) / o.count);
 }
 
 export function starsFor(level: Level, score: number): number {
@@ -56,6 +70,7 @@ function applySteps(s: Session, steps: Step[]): void {
     for (const { gem } of step.cleared) if (gem.color >= 0 && gem.color < s.collected.length) s.collected[gem.color]++;
   }
   s.jellyLeft = countJelly(s.ctx.jelly);
+  s.iceLeft = countIce(s.grid);
 }
 
 function checkEnd(s: Session): void {

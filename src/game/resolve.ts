@@ -56,6 +56,7 @@ export function blastArea(grid: Grid, p: Pos, special: Special): Pos[] {
 
 interface ClearResult {
   cleared: { pos: Pos; gem: Gem }[];
+  thawed: { pos: Pos; gem: Gem }[];
   blasts: { pos: Pos; special: Special }[];
 }
 
@@ -64,6 +65,7 @@ function clearChain(grid: Grid, start: Pos[], ctx: ResolveContext, noTrigger: Se
   const queue = [...start];
   const done = new Set<string>();
   const cleared: ClearResult["cleared"] = [];
+  const thawed: ClearResult["thawed"] = [];
   const blasts: ClearResult["blasts"] = [];
   while (queue.length) {
     const p = queue.shift()!;
@@ -72,6 +74,10 @@ function clearChain(grid: Grid, start: Pos[], ctx: ResolveContext, noTrigger: Se
     done.add(k);
     const gem = grid[p.r][p.c];
     if (!gem) continue;
+    if (gem.ice) {
+      thawed.push({ pos: p, gem });
+      continue;
+    }
     cleared.push({ pos: p, gem });
     if (ctx.jelly[p.r]?.[p.c] > 0) ctx.jelly[p.r][p.c]--;
     if (gem.special !== "none" && !noTrigger.has(k)) {
@@ -80,7 +86,8 @@ function clearChain(grid: Grid, start: Pos[], ctx: ResolveContext, noTrigger: Se
     }
   }
   for (const { pos } of cleared) grid[pos.r][pos.c] = null;
-  return { cleared, blasts };
+  for (const { pos, gem } of thawed) grid[pos.r][pos.c] = { ...gem, ice: gem.ice! - 1 };
+  return { cleared, thawed, blasts };
 }
 
 /** Drops gems down and refills from the top. Mutates grid; returns the new gems. */
@@ -117,9 +124,11 @@ function finishStep(
   for (const { pos, gem } of created) grid[pos.r][pos.c] = gem;
   const afterClear = cloneGrid(grid);
   const spawned = applyGravity(grid, ctx);
-  const score = (res.cleared.length * POINTS_PER_GEM + created.length * SPECIAL_BONUS) * (combo + 1);
+  const hits = res.cleared.length + res.thawed.length;
+  const score = (hits * POINTS_PER_GEM + created.length * SPECIAL_BONUS) * (combo + 1);
   return {
     cleared: res.cleared,
+    thawed: res.thawed,
     created,
     afterClear,
     afterFall: cloneGrid(grid),

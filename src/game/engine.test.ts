@@ -313,3 +313,37 @@ describe("finale", () => {
     expect(finale(grid, 0, ctx()).valid).toBe(false);
   });
 });
+
+describe("ice", () => {
+  const freezeAt = (grid: Grid, r: number, c: number, ice: number) => (grid[r][c] = { ...grid[r][c]!, ice });
+
+  it("a frozen gem can't be swapped", () => {
+    const grid = g(["001", "220", "331"]);
+    expect(isValidSwap(grid, { r: 0, c: 2 }, { r: 1, c: 2 })).toBe(true);
+    freezeAt(grid, 0, 2, 1);
+    expect(isValidSwap(grid, { r: 0, c: 2 }, { r: 1, c: 2 })).toBe(false);
+  });
+  it("a match cracks one layer of ice and leaves the gem", () => {
+    const grid = g(["01212", "23030", "12121", "30303", "13131"]);
+    freezeAt(grid, 0, 0, 2);
+    const res = smash(grid, { r: 0, c: 0 }, ctx());
+    expect(res.steps[0].thawed.map((x) => x.pos)).toEqual([{ r: 0, c: 0 }]);
+    expect(res.steps[0].cleared).toEqual([]);
+    expect(res.grid[0][0]!.id).toBe(grid[0][0]!.id);
+    expect(res.grid[0][0]!.ice).toBe(1);
+  });
+  it("blasts crack ice too", () => {
+    const grid = g(["01212", "23030", "12121", "30303", "13131"]);
+    setSpecial(grid, 2, 0, "lineH");
+    freezeAt(grid, 2, 4, 1);
+    const res = smash(grid, { r: 2, c: 0 }, ctx());
+    expect(res.steps[0].thawed.map((x) => x.pos)).toContainEqual({ r: 2, c: 4 });
+    expect(res.grid.flat().filter((x) => x?.ice).length).toBe(0);
+  });
+  it("shuffling leaves frozen gems where they are", () => {
+    const grid = createGrid(6, 6, 4, createRng(3), { nextId: 1 });
+    grid[2][3] = { ...grid[2][3]!, ice: 1 };
+    const out = shuffleGrid(grid, createRng(9));
+    expect(out[2][3]).toBe(grid[2][3]);
+  });
+});

@@ -233,6 +233,7 @@ export default function App() {
     const o = lv.objective;
     if (o.kind === "score") return t(lang, "goalScore", { n: o.target.toLocaleString("en-US") });
     if (o.kind === "collect") return t(lang, "goalCollect", { n: o.count, gem: (lang === "ne" ? GEM_NAMES_NE : GEM_NAMES_EN)[o.color] });
+    if (o.kind === "ice") return t(lang, "goalIce", { n: o.count });
     return t(lang, "goalJelly", { n: o.count });
   };
 
