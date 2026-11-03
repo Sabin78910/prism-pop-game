@@ -768,3 +768,94 @@ input:focus-visible {
 .mission--done > span { font-weight: 700; }
 .mission .btn--small { min-height: 36px; padding: 4px 12px; white-space: nowrap; }
 .mission .btn--small:disabled { opacity: 0.5; }
+
+/* worlds */
+.chapter {
+  --accent: #c58cff;
+  --deep: #1c0b3d;
+  margin: 8px 0 16px;
+  border-radius: 28px;
+  padding: 14px 12px 8px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--deep) 85%, transparent), transparent 85%);
+  border-top: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+}
+.chapter__head {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.chapter__head h2 {
+  margin: 0;
+  font-family: Fredoka, Inter, sans-serif;
+  font-size: 22px;
+  color: var(--accent);
+}
+.chapter__head p {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+.chapter__num {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  font-family: Fredoka, Inter, sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--deep);
+  background: var(--accent);
+}
+.chapter__stars {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--gold);
+  white-space: nowrap;
+}
+.chapter--locked {
+  opacity: 0.7;
+}
+.chapter--locked .chapter__num {
+  background: rgba(255, 255, 255, 0.16);
+  color: var(--ink);
+}
+.chapter .node:not(.node--locked):not(.node--current) {
+  background: radial-gradient(circle at 35% 30%, #fff, color-mix(in srgb, var(--accent) 45%, #fff) 45%, var(--accent));
+  box-shadow:
+    0 5px 0 color-mix(in srgb, var(--accent) 45%, #000),
+    0 10px 24px color-mix(in srgb, var(--accent) 40%, transparent);
+  color: var(--deep);
+}
+.node--boss {
+  width: 76px;
+  height: 76px;
+  outline: 3px solid color-mix(in srgb, var(--accent) 70%, #fff);
+  outline-offset: 4px;
+}
+.chip {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  background: var(--ruby);
+  color: #fff;
+  vertical-align: middle;
+}
+.chip--new {
+  align-self: center;
+  margin: 0;
+  background: var(--gold2);
+  color: #3b1500;
+  font-weight: 800;
+}
+.intro p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.45;
+}
