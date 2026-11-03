@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GameCanvas } from "./GameCanvas";
+import { Icon } from "./Icon";
 import { sfx } from "./audio";
 import { GEM_NAMES_EN, GEM_NAMES_NE, gemSprite } from "./game/gemArt";
 import { claimMission, loadMissions, MISSION_GOAL, MISSION_IDS, MISSION_REWARD, missionDone, missionProgress, recordFinish, saveMissions } from "./game/missions";
@@ -30,7 +31,7 @@ import {
   type Booster,
   type Session,
 } from "./game/session";
-import type { Level, Pos } from "./game/types";
+import type { Level, Pos, Special } from "./game/types";
 import { num, t, type Lang } from "./i18n";
 import { useInstallPrompt } from "./install";
 import { SyncPanel } from "./SyncPanel";
@@ -61,7 +62,7 @@ function loadSettings(): Settings {
   }
 }
 
-function GemIcon({ color, size = 28 }: { color: number; size?: number }) {
+function GemIcon({ color, size = 28, special = "none" }: { color: number; size?: number; special?: Special }) {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const c = ref.current;
@@ -69,8 +70,8 @@ function GemIcon({ color, size = 28 }: { color: number; size?: number }) {
     if (!c || !ctx) return;
     const px = size * 2;
     c.width = c.height = px;
-    ctx.drawImage(gemSprite(color, "none", px), 0, 0);
-  }, [color, size]);
+    ctx.drawImage(gemSprite(color, special, px), 0, 0);
+  }, [color, size, special]);
   return <canvas ref={ref} style={{ width: size, height: size }} aria-hidden="true" />;
 }
 
@@ -276,7 +277,7 @@ export default function App() {
           <ul>
             {TROPHY_IDS.map((id) => (
               <li key={id} className={earnedTrophies(progress)[id] ? "on" : ""}>
-                <span aria-hidden="true">{earnedTrophies(progress)[id] ? "🏆" : "🔒"}</span> {t(lang, `trophy_${id}` as "trophy_firstWin")}
+                <Icon name={earnedTrophies(progress)[id] ? "trophy" : "lock"} size={18} /> {t(lang, `trophy_${id}` as "trophy_firstWin")}
               </li>
             ))}
           </ul>
@@ -338,7 +339,7 @@ export default function App() {
         <span className="star star--on">★</span> {num(lang, totalStars)}
       </div>
       <button className="icon-btn" onClick={() => setShowSettings(true)} aria-label={t(lang, "settings")}>
-        ⚙
+        <Icon name="gear" />
       </button>
     </header>
   );
@@ -346,32 +347,41 @@ export default function App() {
   if (screen === "home" || (!session && screen !== "map")) {
     return (
       <main className="app home">
-        <div className="bg-gems" aria-hidden="true">
-          {Array.from({ length: 14 }, (_, i) => (
-            <span key={i} style={{ left: `${(i * 37) % 100}%`, animationDelay: `${-i * 1.7}s`, animationDuration: `${12 + (i % 5) * 3}s` }}>
-              <GemIcon color={i % 6} size={22 + (i % 4) * 10} />
-            </span>
-          ))}
-        </div>
+        <div className="prism-light" aria-hidden="true" />
         {topBar}
         <section className="hero">
-          <h1 className="logo">
-            Prism<span>Pop</span>
-          </h1>
+          <div className="brand">
+            <GemIcon color={-1} special="prism" size={56} />
+            <h1 className="logo">
+              Prism <span>Pop</span>
+            </h1>
+          </div>
           <p className="tagline">{t(lang, "tagline")}</p>
-          <button className="btn btn--play" onClick={() => startLevel(makeLevel(nextLevel))}>
-            {t(lang, "play")} · {t(lang, "level")} {num(lang, nextLevel)}
+          <button
+            className="play-card"
+            style={{ "--accent": WORLD_THEME[WORLD_IDS[worldIndex(nextLevel)]].accent } as React.CSSProperties}
+            onClick={() => startLevel(makeLevel(nextLevel))}
+          >
+            <span className="play-card__world">{t(lang, `world_${WORLD_IDS[worldIndex(nextLevel)]}`)}</span>
+            <span className="play-card__level">
+              {t(lang, "level")} {num(lang, nextLevel)}
+            </span>
+            <span className="btn btn--play">{t(lang, "play")}</span>
           </button>
           <div className="cards">
             <button className="card glass" disabled={dailyDone} onClick={() => startLevel(makeDailyLevel(new Date()))}>
-              <span className="card__flame" aria-hidden="true">🔥</span>
+              <span className="card__icon card__icon--daily">
+                <Icon name="flame" />
+              </span>
               <span className="card__title">{t(lang, "daily")}</span>
               <span className="card__sub">
                 {dailyDone ? t(lang, "dailyDone") : `${num(lang, streak)} ${t(lang, "streak")}`}
               </span>
             </button>
             <button className="card glass" onClick={() => setScreen("map")}>
-              <span className="card__flame" aria-hidden="true">🗺️</span>
+              <span className="card__icon">
+                <Icon name="map" />
+              </span>
               <span className="card__title">{t(lang, "map")}</span>
               <span className="card__sub">
                 {num(lang, totalStars)} / {num(lang, (nextLevel - 1) * 3)} ★
@@ -398,7 +408,7 @@ export default function App() {
                       sfx.win();
                     }}
                   >
-                    {missions.claimed[id] ? "✓" : done ? `${t(lang, "claim")} +${num(lang, MISSION_REWARD[id])}` : `+${num(lang, MISSION_REWARD[id])}`}
+                    {missions.claimed[id] ? <Icon name="check" size={18} label="✓" /> : done ? `${t(lang, "claim")} +${num(lang, MISSION_REWARD[id])}` : `+${num(lang, MISSION_REWARD[id])}`}
                   </button>
                 </div>
               );
@@ -423,7 +433,7 @@ export default function App() {
       <main className="app map">
         {topBar}
         <button className="back" onClick={() => setScreen("home")}>
-          ← {t(lang, "home")}
+          <Icon name="back" size={18} /> {t(lang, "home")}
         </button>
         {Array.from({ length: shown + 1 }, (_, w) => {
           const id = WORLD_IDS[w];
@@ -465,7 +475,7 @@ export default function App() {
                           onClick={() => startLevel(makeLevel(n))}
                           ref={n === nextLevel ? (el) => el?.scrollIntoView({ block: "center" }) : undefined}
                         >
-                          {lockedNode ? "🔒" : num(lang, n)}
+                          {lockedNode ? <Icon name="lock" size={20} /> : num(lang, n)}
                         </button>
                         {!lockedNode && <Stars n={progress.stars[n] ?? 0} />}
                       </li>
@@ -486,10 +496,10 @@ export default function App() {
   const prog = objectiveProgress(session);
   const maxStar = lv.stars[2];
   return (
-    <main className="app game">
+    <main className="app game" style={{ "--accent": WORLD_THEME[WORLD_IDS[worldIndex(lv.number || 1)]].accent } as React.CSSProperties}>
       <header className="hud glass">
         <button className="icon-btn" onClick={() => setScreen("home")} aria-label={t(lang, "home")}>
-          ←
+          <Icon name="back" />
         </button>
         <div className="hud__goal">
           <div className="hud__label">
@@ -547,7 +557,7 @@ export default function App() {
         {(["hammer", "shuffle", "moves"] as const).map((b) => (
           <button key={b} className={`booster${b === "hammer" && hammer ? " on" : ""}`} onClick={() => booster(b)}>
             <span className="booster__icon" aria-hidden="true">
-              {b === "hammer" ? "🔨" : b === "shuffle" ? "🔀" : "➕"}
+              <Icon name={b === "hammer" ? "hammer" : b === "shuffle" ? "shuffle" : "plus"} size={24} />
             </span>
             <span>{t(lang, b === "moves" ? "plusMoves" : b)}</span>
             <span className="booster__count">
