@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { findHint, isAdjacent } from "./game/board";
 import { GEM_COLORS, gemSprite } from "./game/gemArt";
-import { comboWord, hapticPattern } from "./game/feedback";
+import { comboWord, hapticPattern, scorePopup } from "./game/feedback";
 import type { Grid, Pos, Step } from "./game/types";
 import type { TurnResult } from "./game/session";
 import { sfx } from "./audio";
@@ -25,6 +25,8 @@ interface Sprite {
   y: number;
   vy: number;
   scale: number;
+  /** 1 on landing, decays to 0: a small squash so falling gems feel heavy. */
+  squash: number;
 }
 interface Particle {
   x: number;
@@ -40,6 +42,9 @@ interface FloatText {
   x: number;
   y: number;
   life: number;
+  /** Font size as a fraction of a cell; combo words are big, score pops are small. */
+  size: number;
+  score?: boolean;
 }
 
 const buzz = (pattern: number[]) => {
@@ -157,7 +162,7 @@ export function GameCanvas(props: Props) {
           if (!gem) continue;
           let sp = s.sprites.get(gem.id);
           if (!sp) {
-            sp = { x: c, y: r, vy: 0, scale: 0.2 };
+            sp = { x: c, y: r, vy: 0, scale: 0.2, squash: 0 };
             s.sprites.set(gem.id, sp);
           }
           let tx = c;
@@ -182,6 +187,7 @@ export function GameCanvas(props: Props) {
               sp.vy += dt * 0.00009;
               sp.y = Math.min(ty, sp.y + sp.vy * dt);
             } else {
+              if (sp.vy > 0.002) sp.squash = 1;
               sp.y = ty;
               sp.vy = 0;
             }
@@ -189,9 +195,12 @@ export function GameCanvas(props: Props) {
           sp.scale += (1 - sp.scale) * Math.min(1, dt / 90);
           let sc = sp.scale;
           if (gem.special === "prism" || gem.special === "bomb") sc *= 1 + 0.05 * Math.sin(now / 160);
-          const size = spriteSize * sc;
+          sp.squash = Math.max(0, sp.squash - dt / 140);
+          const w = spriteSize * sc * (1 + 0.1 * sp.squash);
+          const h = spriteSize * sc * (1 - 0.14 * sp.squash);
           const img = gemSprite(gem.color, gem.special, spriteSize);
-          ctx.drawImage(img, ox + sp.x * cell + (cell - size) / 2, oy + sp.y * cell + (cell - size) / 2, size, size);
+          // Squash anchors at the bottom of the cell so the gem looks like it lands, not shrinks.
+          ctx.drawImage(img, ox + sp.x * cell + (cell - w) / 2, oy + sp.y * cell + cell - (cell - spriteSize * sc) / 2 - h, w, h);
         }
       }
       if (s.swapAnim) {
@@ -215,18 +224,20 @@ export function GameCanvas(props: Props) {
 
       // combo words
       for (const t of s.texts) {
-        t.life -= dt / 1100;
-        t.y -= dt * 0.0006;
+        t.life -= dt / (t.score ? 800 : 1100);
+        t.y -= dt * (t.score ? 0.0012 : 0.0006);
         const a = Math.max(0, Math.min(1, t.life * 2));
         ctx.globalAlpha = a;
-        ctx.font = `700 ${Math.round(cell * 0.75)}px Fredoka, system-ui, sans-serif`;
+        // Pops in with a little overshoot, then settles.
+        const pop = p.reducedMotion ? 1 : 1 + 0.35 * Math.max(0, t.life - 0.8) * 5;
+        ctx.font = `700 ${Math.round(cell * t.size * pop)}px Fredoka, system-ui, sans-serif`;
         ctx.textAlign = "center";
         ctx.lineWidth = cell * 0.12;
         ctx.strokeStyle = "#3b0a6e";
         ctx.strokeText(t.text, ox + t.x * cell, oy + t.y * cell);
         const g = ctx.createLinearGradient(0, oy + (t.y - 0.6) * cell, 0, oy + t.y * cell);
-        g.addColorStop(0, "#FFF3B0");
-        g.addColorStop(1, "#FFB703");
+        g.addColorStop(0, t.score ? "#FFFFFF" : "#FFF3B0");
+        g.addColorStop(1, t.score ? "#C9F2FF" : "#FFB703");
         ctx.fillStyle = g;
         ctx.fillText(t.text, ox + t.x * cell, oy + t.y * cell);
       }
@@ -271,11 +282,18 @@ export function GameCanvas(props: Props) {
       const word = comboWord(step.combo, step.cleared.length, p.lang);
       if (word) {
         const mid = step.cleared[Math.floor(step.cleared.length / 2)]?.pos ?? { r: 4, c: 4 };
-        s.texts.push({ text: word, x: s.grid[0].length / 2, y: Math.max(1.5, mid.r + 0.3), life: 1 });
+        s.texts.push({ text: word, x: s.grid[0].length / 2, y: Math.max(1.5, mid.r + 0.3), life: 1, size: 0.75 });
+      }
+      // The points appear where they were earned, so the reward lands at the point of action.
+      const popup = scorePopup(step.score, step.combo);
+      if (popup && step.cleared.length) {
+        const cx = step.cleared.reduce((a, q) => a + q.pos.c, 0) / step.cleared.length + 0.5;
+        const cy = step.cleared.reduce((a, q) => a + q.pos.r, 0) / step.cleared.length + 0.5;
+        s.texts.push({ text: popup.text, x: cx, y: cy, life: 1, size: popup.scale, score: true });
       }
       s.grid = step.afterClear;
       await wait(fast ? 60 : 170);
-      for (const sp of step.spawned) s.sprites.set(sp.id, { x: sp.c, y: sp.startRow, vy: 0, scale: 1 });
+      for (const sp of step.spawned) s.sprites.set(sp.id, { x: sp.c, y: sp.startRow, vy: 0, scale: 1, squash: 0 });
       s.grid = step.afterFall;
       await wait(fast ? 80 : 260);
     }

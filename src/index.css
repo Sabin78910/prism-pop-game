@@ -524,6 +524,17 @@ input:focus-visible {
   background-clip: text;
   color: transparent;
 }
+.result__best {
+  margin: 0;
+  font-weight: 700;
+  color: var(--gold);
+  animation: popIn 0.4s 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.result__near {
+  margin: 0;
+  font-size: 16px;
+  opacity: 0.9;
+}
 .result__score,
 .result__combo,
 .result__coins {
@@ -635,6 +646,12 @@ input:focus-visible {
   from {
     transform: scale(0) rotate(-40deg);
     opacity: 0;
+  }
+}
+@keyframes starFlash {
+  40% {
+    transform: translate(-100%, -50%) scale(2.1) rotate(18deg);
+    text-shadow: 0 0 22px var(--gold);
   }
 }
 @keyframes confetti {
