@@ -1,7 +1,7 @@
 # Prism Pop design audit
 
 This audit scores the app against `docs/DESIGN-SYSTEM.md`. It has 20 criteria worth 5 points each. "Before" is
-`main` at 7914882. "After" is the studio UI redesign. Each score was checked on the built app at 390×844 with
+`main` at 7914882. "After" is the studio UI redesign (#45) plus the count-up and coin flight follow-up. Each score was checked on the built app at 390×844 with
 Playwright, with no console errors.
 
 | # | Criterion | Before | After | Evidence after |
@@ -24,14 +24,15 @@ Playwright, with no console errors.
 | 16 | Result ribbon and star slots | 2 | 5 | Gold or pink ribbon, slots that fill in turn, confetti |
 | 17 | Goal preview before play | 0 | 5 | Preview sheet with the goal and any new mechanic |
 | 18 | Per-world scenery | 3 | 5 | Five skylines and accents, aurora in the Spire |
-| 19 | Motion on state changes, with reduced motion | 3 | 4 | Spring sheets, star fill and press squash; see gaps |
+| 19 | Motion on state changes, with reduced motion | 3 | 5 | Spring sheets, star fill, press squash, coins fly to the wallet, numbers count up |
 | 20 | Accessibility | 4 | 5 | Focus rings, 48px targets, AA text, labelled switches, Escape closes sheets |
-| | **Total** | **33** | **99** | |
+| | **Total** | **33** | **100** | |
 
-## Gaps that keep it from 100
+## Closing the last point
 
-- **Motion (19):** coins do not fly to the counter yet, and numbers do not count up. Both are listed in the
-  design system and are the next small PR.
+Score, coin rewards and the wallet now count up (`countUp.ts`, 300 to 1200ms, ease-out), and coins fly from
+a reward or a claimed mission into the wallet. Both are skipped with reduced motion, and the final value is
+always shown exactly.
 
 ## What this audit does not cover
 

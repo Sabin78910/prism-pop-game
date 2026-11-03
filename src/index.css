@@ -1261,3 +1261,42 @@ input:focus-visible {
 .chapter {
   background: linear-gradient(180deg, rgba(30, 14, 74, 0.82), rgba(20, 8, 50, 0.55));
 }
+
+/* Coins flying to the wallet and the wallet pill on the result sheet. */
+.coin-flight {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1000;
+}
+.coin--fly {
+  position: fixed;
+  width: 24px;
+  height: 24px;
+  margin: -12px 0 0 -12px;
+  animation-name: coinFly;
+  animation-timing-function: cubic-bezier(0.5, -0.4, 0.8, 0.6);
+  animation-fill-mode: both;
+}
+@keyframes coinFly {
+  0% {
+    transform: translate(0, 0) scale(0.4);
+    opacity: 0;
+  }
+  15% {
+    transform: translate(0, -18px) scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--dx), var(--dy)) scale(0.7);
+    opacity: 1;
+  }
+}
+.wallet {
+  align-self: center;
+}
+@media (prefers-reduced-motion: reduce) {
+  .coin-flight {
+    display: none;
+  }
+}
