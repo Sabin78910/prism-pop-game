@@ -1,4 +1,4 @@
-import { claimMission, freshMissions, loadMissions, missionDone, missionProgress, recordFinish } from "./missions";
+import { claimableCount, claimMission, freshMissions, loadMissions, missionDone, missionProgress, recordFinish } from "./missions";
 
 const day = "2026-10-18";
 
@@ -31,5 +31,14 @@ describe("missions", () => {
     expect(loadMissions({ getItem: () => "{nope" }, day)).toEqual(freshMissions(day));
     expect(loadMissions({ getItem: () => JSON.stringify({ day: "2026-10-01", wins: 3 }) }, day)).toEqual(freshMissions(day));
     expect(loadMissions({ getItem: () => JSON.stringify({ day, wins: 2 }) }, day).wins).toBe(2);
+  });
+});
+
+describe("claimable missions badge", () => {
+  it("counts done but unclaimed missions only", () => {
+    let m = recordFinish(freshMissions("d"), "d", { won: true, daily: true, bestCombo: 3 });
+    expect(claimableCount(m)).toBe(2);
+    m = claimMission(m, "daily").missions;
+    expect(claimableCount(m)).toBe(1);
   });
 });
