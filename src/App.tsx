@@ -37,7 +37,9 @@ import type { Level, Pos, Special } from "./game/types";
 import { num, t, type Lang } from "./i18n";
 import { useInstallPrompt } from "./install";
 import { Confirm, Ribbon, Sheet, Toggle } from "./Kit";
+import { CountUp, useCoinFlight } from "./Motion";
 import { Scenery } from "./Scenery";
+import { walletDelay, coinFlightCount } from "./game/countUp";
 import { SyncPanel } from "./SyncPanel";
 import { useProgressSync } from "./useProgressSync";
 
@@ -112,6 +114,12 @@ export default function App() {
   const [assistLog, setAssistLog] = useState(() => loadAssist(storage));
   const [assistExtra, setAssistExtra] = useState(0);
   const prevShown = useRef(0);
+  const rewardRef = useRef<HTMLSpanElement>(null);
+  const coinFlight = useCoinFlight(settings.reduceMotion);
+  const { fly } = coinFlight;
+  useEffect(() => {
+    if (result?.won) fly(rewardRef.current, result.coins);
+  }, [result, fly]);
   const { canInstall, install } = useInstallPrompt();
   const lang = settings.lang;
   const today = dailyKey(new Date());
@@ -297,7 +305,9 @@ export default function App() {
         <span className="pill__icon">
           <span className="coin" />
         </span>
-        <span className="pill__value">{num(lang, progress.coins)}</span>
+        <span className="pill__value" data-coin-target>
+          <CountUp value={progress.coins} lang={lang} reduce={settings.reduceMotion} />
+        </span>
       </div>
       <div className="pill" aria-label={`★ ${totalStars}`}>
         <span className="pill__icon star-badge">★</span>
@@ -424,8 +434,9 @@ export default function App() {
             <button
               className={`btn btn--small${done && !missions.claimed[id] ? " btn--gold" : " btn--ghost"}`}
               disabled={!done || missions.claimed[id]}
-              onClick={() => {
+              onClick={(e) => {
                 const r = claimMission(missions, id);
+                fly(e.currentTarget, r.coins);
                 if (r.coins === 0) return;
                 setMissions(r.missions);
                 setProgress((pr) => ({ ...pr, coins: pr.coins + r.coins, updatedAt: Date.now() }));
@@ -475,6 +486,7 @@ export default function App() {
       {goalsPanel}
       {settingsPanel}
       {resetConfirm}
+      {coinFlight.layer}
     </>
   );
 
@@ -624,6 +636,7 @@ export default function App() {
   return (
     <>
       <Scenery world={world} />
+      {coinFlight.layer}
       <main className="app game" style={{ "--accent": WORLD_THEME[isDaily ? "spire" : world].accent } as React.CSSProperties}>
         <header className="hud panel">
           <button className="btn btn--ghost round" onClick={() => setScreen("home")} aria-label={t(lang, "home")}>
@@ -725,7 +738,9 @@ export default function App() {
                 </span>
               ))}
             </div>
-            <p className="result__score">{num(lang, session.score)}</p>
+            <p className="result__score">
+              <CountUp value={session.score} from={0} delay={250} lang={lang} reduce={settings.reduceMotion} />
+            </p>
             {result.newBest && <p className="result__best">{t(lang, "newBest")}</p>}
             {result.nearMiss !== null && <p>{t(lang, "soClose", { n: result.nearMiss })}</p>}
             {!result.won && settings.assist && !isDaily && assistMoves(assistLog[lv.number] ?? 0) > assistExtra && (
@@ -737,9 +752,25 @@ export default function App() {
               </p>
             )}
             {result.won && (
-              <span className="reward">
-                <span className="coin" /> +{num(lang, result.coins)}
-              </span>
+              <>
+                <span className="reward" ref={rewardRef}>
+                  <span className="coin" /> +{num(lang, result.coins)}
+                </span>
+                <span className="pill wallet" aria-label={`${t(lang, "coins")}: ${progress.coins}`}>
+                  <span className="pill__icon">
+                    <span className="coin" />
+                  </span>
+                  <span className="pill__value" data-coin-target>
+                    <CountUp
+                      value={progress.coins}
+                      from={progress.coins - result.coins}
+                      delay={walletDelay(coinFlightCount(result.coins))}
+                      lang={lang}
+                      reduce={settings.reduceMotion}
+                    />
+                  </span>
+                </span>
+              </>
             )}
             {result.won ? (
               <>
