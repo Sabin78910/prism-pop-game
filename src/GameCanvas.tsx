@@ -9,6 +9,8 @@ import { sfx } from "./audio";
 
 interface Props {
   grid: Grid;
+  /** Checkerboard tile colours from the chosen board theme. */
+  tiles: [string, string];
   jelly: number[][];
   lang: "en" | "ne";
   reducedMotion: boolean;
@@ -124,7 +126,7 @@ export function GameCanvas(props: Props) {
         for (let c = 0; c < cols; c++) {
           const x = ox + c * cell;
           const y = oy + r * cell;
-          ctx.fillStyle = (r + c) % 2 ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.11)";
+          ctx.fillStyle = p.tiles[(r + c) % 2];
           ctx.beginPath();
           ctx.roundRect(x + 1.5, y + 1.5, cell - 3, cell - 3, cell * 0.18);
           ctx.fill();

@@ -948,3 +948,18 @@ input:focus-visible {
     inset 0 0 0 1px color-mix(in srgb, var(--accent, #c58cff) 45%, transparent),
     0 0 48px color-mix(in srgb, var(--accent, #c58cff) 14%, transparent);
 }
+
+.themes h3 { margin: 8px 0 8px; font-size: 1rem; text-align: left; }
+.themes__row { display: flex; flex-wrap: wrap; gap: 10px; }
+.swatch {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-sm);
+  border: 2px solid transparent;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, var(--swatch), color-mix(in srgb, var(--swatch) 35%, #140a2e));
+  transition: transform 0.15s var(--spring);
+}
+.swatch--on { border-color: #fff; transform: scale(1.08); }
+.swatch:disabled { filter: grayscale(0.8) brightness(0.6); cursor: default; }

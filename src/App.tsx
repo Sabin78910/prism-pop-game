@@ -6,6 +6,7 @@ import { GEM_NAMES_EN, GEM_NAMES_NE, gemSprite } from "./game/gemArt";
 import { claimMission, loadMissions, MISSION_GOAL, MISSION_IDS, MISSION_REWARD, missionDone, missionProgress, recordFinish, saveMissions } from "./game/missions";
 import { earnedTrophies, TROPHY_IDS } from "./game/trophies";
 import { easeTowards, hapticPattern, isNewBest, nearMissPercent, starsCrossed } from "./game/feedback";
+import { activeTheme, BOARD_THEMES, THEME_IDS, themeUnlocked } from "./game/themes";
 import { assistMoves, loadAssist, recordResult, saveAssist, withAssist } from "./game/assist";
 import { dailyKey, makeDailyLevel, makeLevel } from "./game/level";
 import { introFor, planFor, WORLD_IDS, WORLD_SIZE, WORLD_THEME, worldIndex, worldRange, worldStars, type Mechanic } from "./game/worlds";
@@ -45,6 +46,8 @@ interface Settings {
   reduceMotion: boolean;
   /** Fair assist: a few extra moves after repeated losses on one level. */
   assist: boolean;
+  /** Chosen board theme; drawn only once earned. */
+  theme: string;
   lang: Lang;
   onboarded: boolean;
 }
@@ -54,7 +57,7 @@ const storage = typeof localStorage !== "undefined" ? localStorage : undefined;
 
 function loadSettings(): Settings {
   const sysReduce = typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const base: Settings = { sound: true, haptics: true, reduceMotion: sysReduce, assist: true, lang: "en", onboarded: false };
+  const base: Settings = { sound: true, haptics: true, reduceMotion: sysReduce, assist: true, theme: "classic", lang: "en", onboarded: false };
   try {
     return { ...base, ...JSON.parse(storage?.getItem(SETTINGS_KEY) ?? "{}") };
   } catch {
@@ -268,6 +271,31 @@ export default function App() {
                 {l === "en" ? "English" : "नेपाली"}
               </button>
             ))}
+          </div>
+        </div>
+        <div className="themes">
+          <h3>{t(lang, "boardTheme")}</h3>
+          <div className="themes__row" role="radiogroup" aria-label={t(lang, "boardTheme")}>
+            {THEME_IDS.map((id) => {
+              const open = themeUnlocked(id, progress.unlocked);
+              const on = activeTheme(settings.theme, progress.unlocked) === id;
+              const name = id === "classic" ? t(lang, "themeClassic") : t(lang, `world_${id}`);
+              return (
+                <button
+                  key={id}
+                  role="radio"
+                  aria-checked={on}
+                  disabled={!open}
+                  className={`swatch${on ? " swatch--on" : ""}`}
+                  style={{ "--swatch": BOARD_THEMES[id].swatch } as React.CSSProperties}
+                  aria-label={open ? name : `${name}: ${t(lang, "themeLocked", { world: name })}`}
+                  title={open ? name : t(lang, "themeLocked", { world: name })}
+                  onClick={() => setSettings({ ...settings, theme: id })}
+                >
+                  {!open && <Icon name="lock" size={16} />}
+                </button>
+              );
+            })}
           </div>
         </div>
         <div className="trophies">
@@ -541,6 +569,7 @@ export default function App() {
         <GameCanvas
           key={`${lv.seed}-${lv.number}`}
           grid={session.grid}
+          tiles={BOARD_THEMES[activeTheme(settings.theme, progress.unlocked)].tiles}
           getGrid={() => session.grid}
           jelly={session.ctx.jelly}
           lang={lang}
