@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { findHint, isAdjacent } from "./game/board";
 import { GEM_COLORS, gemSprite } from "./game/gemArt";
 import { comboWord, hapticPattern, scorePopup } from "./game/feedback";
+import { effectProgress, hitStopMs, stepEffects, type Effect } from "./game/effects";
 import type { Grid, Pos, Step } from "./game/types";
 import type { TurnResult } from "./game/session";
 import { sfx } from "./audio";
@@ -62,6 +63,7 @@ export function GameCanvas(props: Props) {
     sprites: new Map<number, Sprite>(),
     particles: [] as Particle[],
     texts: [] as FloatText[],
+    fx: [] as { e: Effect; age: number }[],
     busy: false,
     selected: null as Pos | null,
     drag: null as { pos: Pos; x: number; y: number } | null,
@@ -223,6 +225,54 @@ export function GameCanvas(props: Props) {
         s.swapAnim.t += dt / (p.reducedMotion ? 60 : 150);
       }
 
+      // blast effects: beams, shockwaves, prism rays, creation flashes
+      for (const f of s.fx) {
+        f.age += dt / 1000;
+        const { e } = f;
+        const k = effectProgress(f.age, e.duration);
+        const fade = 1 - Math.min(1, f.age / e.duration);
+        const geo = p.reducedMotion ? 0.5 : k;
+        const cx = ox + e.c * cell;
+        const cy = oy + e.r * cell;
+        ctx.globalAlpha = fade;
+        if (e.kind === "beamH" || e.kind === "beamV") {
+          const thick = cell * (0.95 - 0.7 * geo);
+          const horizontal = e.kind === "beamH";
+          const g = horizontal
+            ? ctx.createLinearGradient(0, cy - thick / 2, 0, cy + thick / 2)
+            : ctx.createLinearGradient(cx - thick / 2, 0, cx + thick / 2, 0);
+          g.addColorStop(0, "rgba(120,220,255,0)");
+          g.addColorStop(0.5, "rgba(255,255,255,0.95)");
+          g.addColorStop(1, "rgba(120,220,255,0)");
+          ctx.fillStyle = g;
+          if (horizontal) ctx.fillRect(ox, cy - thick / 2, cols * cell, thick);
+          else ctx.fillRect(cx - thick / 2, oy, thick, rows * cell);
+        } else if (e.kind === "ring" && !p.reducedMotion) {
+          ctx.strokeStyle = "rgba(255,226,140,1)";
+          ctx.lineWidth = Math.max(1, cell * 0.28 * (1 - k));
+          ctx.beginPath();
+          ctx.arc(cx, cy, cell * (0.3 + 2.4 * k), 0, Math.PI * 2);
+          ctx.stroke();
+        } else if (e.kind === "rays" && !p.reducedMotion) {
+          ctx.lineWidth = cell * 0.12;
+          for (let i = 0; i < 12; i++) {
+            const a = (i / 12) * Math.PI * 2 + k * 0.7;
+            ctx.strokeStyle = `hsl(${i * 30}, 95%, 70%)`;
+            ctx.beginPath();
+            ctx.moveTo(cx + Math.cos(a) * cell * 0.4, cy + Math.sin(a) * cell * 0.4);
+            ctx.lineTo(cx + Math.cos(a) * cell * (0.6 + 6 * k), cy + Math.sin(a) * cell * (0.6 + 6 * k));
+            ctx.stroke();
+          }
+        } else if (e.kind === "flash") {
+          ctx.fillStyle = "rgba(255,255,255,0.85)";
+          ctx.beginPath();
+          ctx.arc(cx, cy, cell * (0.3 + 0.5 * geo), 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      ctx.globalAlpha = 1;
+      s.fx = s.fx.filter((f) => f.age < f.e.duration);
+
       // particles
       for (const pt of s.particles) {
         pt.x += pt.vx * dt;
@@ -276,6 +326,10 @@ export function GameCanvas(props: Props) {
     const p = propsRef.current;
     const fast = p.reducedMotion;
     for (const step of steps) {
+      // Hit-stop: hold the frame a beat before a blast lands, so the impact reads.
+      const stop = hitStopMs(step.blasts.length, fast);
+      if (stop) await wait(stop);
+      s.fx.push(...stepEffects(step).map((e) => ({ e, age: 0 })));
       for (const { pos, gem } of step.cleared) {
         const color = gem.color >= 0 ? GEM_COLORS[gem.color][0] : "#ffffff";
         const n = fast ? 2 : 7;
