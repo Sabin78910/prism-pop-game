@@ -99,6 +99,10 @@ const en = {
   introBody_blockers: "Frozen gems now guard other goals. Crack them to open up the board.",
   intro_sixColors: "Six colours",
   introBody_sixColors: "A sixth gem joins the board, so matches are rarer. Build power gems and combine them.",
+  assist: "Extra moves after a few tries",
+  assistChip: "+{n} assist",
+  assistNext: "Your next try starts with {n} extra moves.",
+  assistWhy: "You've tried this level a few times, so it starts with extra moves. Turn this off in Settings.",
   privacy: "Privacy",
 };
 
@@ -201,6 +205,10 @@ const ne: typeof en = {
   introBody_blockers: "अब जमेका रत्नले अरू लक्ष्य छेक्छन्। बोर्ड खोल्न हिउँ फुटाउनुहोस्।",
   intro_sixColors: "छ रङ",
   introBody_sixColors: "बोर्डमा छैटौँ रत्न थपिन्छ, त्यसैले मिलान कम हुन्छ। शक्ति रत्न बनाएर जोड्नुहोस्।",
+  assist: "केही प्रयासपछि थप चाल",
+  assistChip: "+{n} सहयोग",
+  assistNext: "अर्को प्रयास {n} थप चालसहित सुरु हुन्छ।",
+  assistWhy: "तपाईंले यो तह केही पटक खेल्नुभयो, त्यसैले थप चालसहित सुरु हुन्छ। सेटिङमा बन्द गर्न सकिन्छ।",
   privacy: "गोपनीयता",
 };
 

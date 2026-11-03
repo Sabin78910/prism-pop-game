@@ -5,6 +5,7 @@ import { GEM_NAMES_EN, GEM_NAMES_NE, gemSprite } from "./game/gemArt";
 import { claimMission, loadMissions, MISSION_GOAL, MISSION_IDS, MISSION_REWARD, missionDone, missionProgress, recordFinish, saveMissions } from "./game/missions";
 import { earnedTrophies, TROPHY_IDS } from "./game/trophies";
 import { easeTowards, hapticPattern, isNewBest, nearMissPercent, starsCrossed } from "./game/feedback";
+import { assistMoves, loadAssist, recordResult, saveAssist, withAssist } from "./game/assist";
 import { dailyKey, makeDailyLevel, makeLevel } from "./game/level";
 import { introFor, planFor, WORLD_IDS, WORLD_SIZE, WORLD_THEME, worldIndex, worldRange, worldStars, type Mechanic } from "./game/worlds";
 import {
@@ -41,6 +42,8 @@ interface Settings {
   sound: boolean;
   haptics: boolean;
   reduceMotion: boolean;
+  /** Fair assist: a few extra moves after repeated losses on one level. */
+  assist: boolean;
   lang: Lang;
   onboarded: boolean;
 }
@@ -50,7 +53,7 @@ const storage = typeof localStorage !== "undefined" ? localStorage : undefined;
 
 function loadSettings(): Settings {
   const sysReduce = typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const base: Settings = { sound: true, haptics: true, reduceMotion: sysReduce, lang: "en", onboarded: false };
+  const base: Settings = { sound: true, haptics: true, reduceMotion: sysReduce, assist: true, lang: "en", onboarded: false };
   try {
     return { ...base, ...JSON.parse(storage?.getItem(SETTINGS_KEY) ?? "{}") };
   } catch {
@@ -96,6 +99,8 @@ export default function App() {
   const [result, setResult] = useState<null | { won: boolean; stars: number; coins: number; newBest: boolean; nearMiss: number | null }>(null);
   const [starFlash, setStarFlash] = useState<number | null>(null);
   const [intro, setIntro] = useState<Mechanic | null>(null);
+  const [assistLog, setAssistLog] = useState(() => loadAssist(storage));
+  const [assistExtra, setAssistExtra] = useState(0);
   const prevShown = useRef(0);
   const { canInstall, install } = useInstallPrompt();
   const lang = settings.lang;
@@ -115,6 +120,7 @@ export default function App() {
 
   useEffect(() => saveProgress(storage, progress), [progress]);
   useEffect(() => saveMissions(storage, missions), [missions]);
+  useEffect(() => saveAssist(storage, assistLog), [assistLog]);
   const sync = useProgressSync(progress, setProgress);
 
   // Score counts up smoothly instead of jumping.
@@ -146,7 +152,9 @@ export default function App() {
     return () => clearTimeout(id);
   }, [shownScore, session, settings.haptics]);
 
-  const startLevel = useCallback((level: Level) => {
+  const startLevel = useCallback((base: Level) => {
+    const { level, extra } = withAssist(base, assistLog, settings.assist);
+    setAssistExtra(extra);
     setSession(startSession(level));
     setShownScore(0);
     prevShown.current = 0;
@@ -154,10 +162,11 @@ export default function App() {
     setHammer(false);
     setIntro(level.number > 0 ? introFor(level.number) : null);
     setScreen("game");
-  }, []);
+  }, [assistLog, settings.assist]);
 
   const finish = useCallback(
     (s: Session) => {
+      if (s.status === "won" || s.status === "lost") setAssistLog((log) => recordResult(log, s.level.number, s.status === "won"));
       if (s.status === "won") {
         const stars = Math.max(1, starsFor(s.level, s.score));
         const coins = coinReward(stars, s.movesLeft);
@@ -244,9 +253,9 @@ export default function App() {
     <div className="modal" role="dialog" aria-modal="true" aria-label={t(lang, "settings")}>
       <div className="sheet glass">
         <h2>{t(lang, "settings")}</h2>
-        {(["sound", "haptics", "reduceMotion"] as const).map((k) => (
+        {(["sound", "haptics", "reduceMotion", "assist"] as const).map((k) => (
           <label key={k} className="toggle">
-            <span>{t(lang, k === "sound" ? "sound" : k === "haptics" ? "vibration" : "motion")}</span>
+            <span>{t(lang, k === "sound" ? "sound" : k === "haptics" ? "vibration" : k === "assist" ? "assist" : "motion")}</span>
             <input type="checkbox" checked={settings[k]} onChange={(e) => setSettings({ ...settings, [k]: e.target.checked })} />
           </label>
         ))}
@@ -500,6 +509,11 @@ export default function App() {
         <div className="hud__moves" aria-live="polite">
           <span className="hud__num">{num(lang, session.movesLeft)}</span>
           <span className="hud__label">{t(lang, "moves")}</span>
+          {assistExtra > 0 && (
+            <span className="hud__assist" title={t(lang, "assistWhy")}>
+              {t(lang, "assistChip", { n: assistExtra })}
+            </span>
+          )}
         </div>
       </header>
       <div className="scorebar" aria-label={t(lang, "score")}>
@@ -568,6 +582,9 @@ export default function App() {
             {result.won && <Stars n={result.stars} big />}
             {result.newBest && <p className="result__best">{t(lang, "newBest")}</p>}
             {result.nearMiss !== null && <p className="result__near">{t(lang, "soClose", { n: result.nearMiss })}</p>}
+            {!result.won && settings.assist && !isDaily && assistMoves(assistLog[lv.number] ?? 0) > assistExtra && (
+              <p className="result__near">{t(lang, "assistNext", { n: assistMoves(assistLog[lv.number] ?? 0) })}</p>
+            )}
             <p className="result__score">
               {t(lang, "score")}: <strong>{num(lang, session.score)}</strong>
             </p>
