@@ -36,5 +36,11 @@ Design: night violet #140A2E, six gem colours each with its own shape, Fredoka d
 - Fair by design: no lives, no energy wall, no forced ads. Never copy art or names from another
   game. Each gem colour keeps a distinct shape so colour-blind players can tell them apart.
 
+## Approvals
+- Ask before any production or store change: GitHub Pages deploys (`deploy.yml`), Play Console or store listing (`store/`, `fastlane/`), release tags, signing config.
+- Keep changes focused on the requested task, and report which checks ran and what was not verified.
+- `.claude/settings.json` lets routine build and test commands run without prompts. Pushing to `main`,
+  force pushes, secret changes and fastlane are blocked.
+
 ## Done when
 Lint clean, tests pass, CI green, PR opened with a three line summary. User facing work follows `docs/FEEL.md`.
