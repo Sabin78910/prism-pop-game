@@ -2,13 +2,13 @@
 
 **Build:** 1.0.0 · web build wrapped with Capacitor · target API 36 once PR #29 is merged (main is still API 35)
 **Date:** 3 Nov 2026 · **Checked:** `main` at b5385ce, and `main` with PR #29 (API 36) + PR #30 (missions, trophies, store art) merged together locally
-**Automated checks:** lint clean, typecheck clean, tests 79/79 on `main` and 86/86 with #29 + #30, `npm run build` OK (main JS 86 KB gzipped, budget 180 KB), `npx cap sync android` OK
+**Automated checks:** lint clean, typecheck clean, tests 79/79 on `main` and 86/86 with #29 + #30, `npm run build` OK (main JS 86 KB gzipped, budget 180 KB), `npx cap sync android` OK, `Android AAB` release build green on the API 36 branch
 
 ## 1. Release blockers
 
 | # | Item | Status |
 |---|---|---|
-| B1 | Target API 36 (Play rejects new apps targeting 35) | PR #29. Run the `Android AAB` workflow on its branch before merging; the Gradle build was not run here. |
+| B1 | Target API 36 (Play rejects new apps targeting 35) | PR #29. The `Android AAB` workflow built the release bundle on its branch (3 Nov 2026, green; unsigned until B4). |
 | B2 | Privacy policy covers Prism Pop and its sync | privacy-policy PR #3 (stacked on #2, Ludo Live). |
 | B3 | Store icon, feature graphic, screenshots | PR #30 (`store/`). |
 | B4 | Signed AAB | Add the `KEYSTORE_*` repo secrets (steps in `docs/PLAY-RELEASE.md` from PR #29). Without them the AAB is unsigned and Play rejects it. |
