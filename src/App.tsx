@@ -4,7 +4,7 @@ import { sfx } from "./audio";
 import { GEM_NAMES_EN, GEM_NAMES_NE, gemSprite } from "./game/gemArt";
 import { claimMission, loadMissions, MISSION_GOAL, MISSION_IDS, MISSION_REWARD, missionDone, missionProgress, recordFinish, saveMissions } from "./game/missions";
 import { earnedTrophies, TROPHY_IDS } from "./game/trophies";
-import { hapticPattern, easeTowards } from "./game/feedback";
+import { easeTowards, hapticPattern, isNewBest, nearMissPercent, starsCrossed } from "./game/feedback";
 import { dailyKey, makeDailyLevel, makeLevel } from "./game/level";
 import {
   BOOSTER_PRICE,
@@ -92,7 +92,9 @@ export default function App() {
   const [hammer, setHammer] = useState(false);
   const [shownScore, setShownScore] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
-  const [result, setResult] = useState<null | { won: boolean; stars: number; coins: number }>(null);
+  const [result, setResult] = useState<null | { won: boolean; stars: number; coins: number; newBest: boolean; nearMiss: number | null }>(null);
+  const [starFlash, setStarFlash] = useState<number | null>(null);
+  const prevShown = useRef(0);
   const { canInstall, install } = useInstallPrompt();
   const lang = settings.lang;
   const today = dailyKey(new Date());
@@ -127,9 +129,25 @@ export default function App() {
     return () => cancelAnimationFrame(raf);
   }, [session]);
 
+  // A star lighting up mid-level gets its own chime and buzz: progress you can hear and feel.
+  useEffect(() => {
+    const prev = prevShown.current;
+    prevShown.current = shownScore;
+    if (!session || shownScore < prev) return;
+    const crossed = starsCrossed(prev, shownScore, session.level.stars);
+    if (!crossed.length) return;
+    const i = crossed[crossed.length - 1];
+    sfx.star(i);
+    if (settings.haptics && "vibrate" in navigator) navigator.vibrate(hapticPattern("star", true));
+    setStarFlash(i);
+    const id = setTimeout(() => setStarFlash(null), 700);
+    return () => clearTimeout(id);
+  }, [shownScore, session, settings.haptics]);
+
   const startLevel = useCallback((level: Level) => {
     setSession(startSession(level));
     setShownScore(0);
+    prevShown.current = 0;
     setResult(null);
     setHammer(false);
     setScreen("game");
@@ -144,15 +162,17 @@ export default function App() {
           s.level.number === 0 ? recordDaily(p, today, coins) : recordWin(p, s.level.number, stars, s.score, coins),
         );
         setMissions((m) => recordFinish(m, today, { won: true, daily: s.level.number === 0, bestCombo: s.bestCombo }));
-        setResult({ won: true, stars, coins });
+        const newBest = s.level.number > 0 && isNewBest(progress.best[s.level.number], s.score);
+        setResult({ won: true, stars, coins, newBest, nearMiss: null });
         sfx.win();
+        if (newBest) sfx.record();
         if (settings.haptics && "vibrate" in navigator) navigator.vibrate(hapticPattern("win", true));
       } else if (s.status === "lost") {
-        setResult({ won: false, stars: 0, coins: 0 });
+        setResult({ won: false, stars: 0, coins: 0, newBest: false, nearMiss: nearMissPercent(objectiveProgress(s)) });
         sfx.lose();
       }
     },
-    [settings.haptics, today],
+    [settings.haptics, today, progress.best],
   );
 
   const onSettled = useCallback(() => {
@@ -444,7 +464,7 @@ export default function App() {
         <div className="scorebar__track">
           <div className="scorebar__fill" style={{ width: `${Math.min(100, (shownScore / maxStar) * 100)}%` }} />
           {lv.stars.map((s, i) => (
-            <span key={i} className={`scorebar__star${shownScore >= s ? " on" : ""}`} style={{ left: `${(s / maxStar) * 100}%` }}>
+            <span key={i} className={`scorebar__star${shownScore >= s ? " on" : ""}${starFlash === i ? " flash" : ""}`} style={{ left: `${(s / maxStar) * 100}%` }}>
               ★
             </span>
           ))}
@@ -491,6 +511,8 @@ export default function App() {
             )}
             <h2>{result.won ? t(lang, "win") : t(lang, "lose")}</h2>
             {result.won && <Stars n={result.stars} big />}
+            {result.newBest && <p className="result__best">{t(lang, "newBest")}</p>}
+            {result.nearMiss !== null && <p className="result__near">{t(lang, "soClose", { n: result.nearMiss })}</p>}
             <p className="result__score">
               {t(lang, "score")}: <strong>{num(lang, session.score)}</strong>
             </p>

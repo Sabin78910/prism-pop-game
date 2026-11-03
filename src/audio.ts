@@ -57,6 +57,16 @@ class Sfx {
   lose(): void {
     [392, 330, 262].forEach((f, i) => this.tone(f, 0.3, "sine", 0.1, i * 0.14));
   }
+  /** Star earned mid-level: a bright chime that climbs with each star. */
+  star(index: number): void {
+    const base = 784 * Math.pow(2, index / 4);
+    this.tone(base, 0.18, "sine", 0.12);
+    this.tone(base * 2, 0.22, "triangle", 0.06, 0.06);
+  }
+  /** Personal best: a short rising flourish, quieter than the win fanfare it follows. */
+  record(): void {
+    [1047, 1319, 1568, 2093].forEach((f, i) => this.tone(f, 0.12, "triangle", 0.07, 0.7 + i * 0.06));
+  }
   coin(): void {
     this.tone(988, 0.08, "square", 0.05);
     this.tone(1319, 0.16, "square", 0.05, 0.07);

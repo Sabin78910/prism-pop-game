@@ -1,5 +1,5 @@
 import { allKeysTranslated, num, t, toNepaliDigits } from "./i18n";
-import { comboWord, easeTowards, hapticPattern, popFrequency } from "./game/feedback";
+import { comboWord, easeTowards, hapticPattern, isNewBest, nearMissPercent, popFrequency, scorePopup, starsCrossed } from "./game/feedback";
 import { registerServiceWorker } from "./registerSW";
 
 describe("i18n", () => {
@@ -47,5 +47,35 @@ describe("service worker", () => {
     expect(registerServiceWorker(false, { register })).toBe(false);
     expect(registerServiceWorker(true, { register })).toBe(true);
     expect(register).toHaveBeenCalledWith("./sw.js");
+  });
+});
+
+describe("reward feedback", () => {
+  it("shows the points earned, larger for bigger cascades", () => {
+    expect(scorePopup(0, 0)).toBeNull();
+    expect(scorePopup(1200, 0)?.text).toBe("+1,200");
+    expect(scorePopup(60, 3)!.scale).toBeGreaterThan(scorePopup(60, 0)!.scale);
+    expect(scorePopup(60, 99)!.scale).toBe(scorePopup(60, 4)!.scale);
+  });
+  it("reports each star threshold crossed, once", () => {
+    const stars = [1000, 2000, 3000];
+    expect(starsCrossed(900, 1000, stars)).toEqual([0]);
+    expect(starsCrossed(1000, 1500, stars)).toEqual([]);
+    expect(starsCrossed(500, 3200, stars)).toEqual([0, 1, 2]);
+  });
+  it("only calls a loss a near miss when the player was genuinely close", () => {
+    expect(nearMissPercent(0.5)).toBeNull();
+    expect(nearMissPercent(0.87)).toBe(87);
+    expect(nearMissPercent(0.999)).toBe(99);
+    expect(nearMissPercent(1)).toBeNull();
+  });
+  it("counts a personal best only when beating an earlier score", () => {
+    expect(isNewBest(undefined, 500)).toBe(false);
+    expect(isNewBest(400, 500)).toBe(true);
+    expect(isNewBest(500, 500)).toBe(false);
+  });
+  it("has a distinct haptic for a star", () => {
+    expect(hapticPattern("star", true).length).toBeGreaterThan(0);
+    expect(hapticPattern("star", false)).toEqual([]);
   });
 });
