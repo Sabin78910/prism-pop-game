@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GameCanvas } from "./GameCanvas";
 import { sfx } from "./audio";
 import { GEM_NAMES_EN, GEM_NAMES_NE, gemSprite } from "./game/gemArt";
+import { claimMission, loadMissions, MISSION_GOAL, MISSION_IDS, MISSION_REWARD, missionDone, missionProgress, recordFinish, saveMissions } from "./game/missions";
+import { earnedTrophies, TROPHY_IDS } from "./game/trophies";
 import { hapticPattern, easeTowards } from "./game/feedback";
 import { dailyKey, makeDailyLevel, makeLevel } from "./game/level";
 import {
@@ -83,6 +85,7 @@ function Stars({ n, big = false }: { n: number; big?: boolean }) {
 export default function App() {
   const [settings, setSettings] = useState<Settings>(loadSettings);
   const [progress, setProgress] = useState<Progress>(() => loadProgress(storage));
+  const [missions, setMissions] = useState(() => loadMissions(storage, dailyKey(new Date())));
   const [screen, setScreen] = useState<Screen>("home");
   const [session, setSession] = useState<Session | null>(null);
   const [, force] = useState(0);
@@ -107,6 +110,7 @@ export default function App() {
   }, [settings]);
 
   useEffect(() => saveProgress(storage, progress), [progress]);
+  useEffect(() => saveMissions(storage, missions), [missions]);
   const sync = useProgressSync(progress, setProgress);
 
   // Score counts up smoothly instead of jumping.
@@ -139,6 +143,7 @@ export default function App() {
         setProgress((p) =>
           s.level.number === 0 ? recordDaily(p, today, coins) : recordWin(p, s.level.number, stars, s.score, coins),
         );
+        setMissions((m) => recordFinish(m, today, { won: true, daily: s.level.number === 0, bestCombo: s.bestCombo }));
         setResult({ won: true, stars, coins });
         sfx.win();
         if (settings.haptics && "vibrate" in navigator) navigator.vibrate(hapticPattern("win", true));
@@ -230,6 +235,18 @@ export default function App() {
               </button>
             ))}
           </div>
+        </div>
+        <div className="trophies">
+          <h3>
+            {t(lang, "trophies")} {TROPHY_IDS.filter((id) => earnedTrophies(progress)[id]).length}/{TROPHY_IDS.length}
+          </h3>
+          <ul>
+            {TROPHY_IDS.map((id) => (
+              <li key={id} className={earnedTrophies(progress)[id] ? "on" : ""}>
+                <span aria-hidden="true">{earnedTrophies(progress)[id] ? "🏆" : "🔒"}</span> {t(lang, `trophy_${id}` as "trophy_firstWin")}
+              </li>
+            ))}
+          </ul>
         </div>
         <SyncPanel
           lang={lang}
@@ -327,6 +344,32 @@ export default function App() {
                 {num(lang, totalStars)} / {num(lang, (nextLevel - 1) * 3)} ★
               </span>
             </button>
+          </div>
+          <div className="missions glass">
+            <h3>{t(lang, "missions")}</h3>
+            {MISSION_IDS.map((id) => {
+              const done = missionDone(missions, id);
+              return (
+                <div key={id} className={`mission${done ? " mission--done" : ""}`}>
+                  <span>
+                    {t(lang, `mission_${id}` as "mission_win3")} · {num(lang, missionProgress(missions, id))}/{num(lang, MISSION_GOAL[id])}
+                  </span>
+                  <button
+                    className="btn btn--small"
+                    disabled={!done || missions.claimed[id]}
+                    onClick={() => {
+                      const r = claimMission(missions, id);
+                      if (r.coins === 0) return;
+                      setMissions(r.missions);
+                      setProgress((p) => ({ ...p, coins: p.coins + r.coins, updatedAt: Date.now() }));
+                      sfx.win();
+                    }}
+                  >
+                    {missions.claimed[id] ? "✓" : done ? `${t(lang, "claim")} +${num(lang, MISSION_REWARD[id])}` : `+${num(lang, MISSION_REWARD[id])}`}
+                  </button>
+                </div>
+              );
+            })}
           </div>
           {canInstall && (
             <button className="btn btn--ghost" onClick={install}>
