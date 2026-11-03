@@ -6,6 +6,7 @@ import { claimMission, loadMissions, MISSION_GOAL, MISSION_IDS, MISSION_REWARD, 
 import { earnedTrophies, TROPHY_IDS } from "./game/trophies";
 import { easeTowards, hapticPattern, isNewBest, nearMissPercent, starsCrossed } from "./game/feedback";
 import { dailyKey, makeDailyLevel, makeLevel } from "./game/level";
+import { introFor, planFor, WORLD_IDS, WORLD_SIZE, WORLD_THEME, worldIndex, worldRange, worldStars, type Mechanic } from "./game/worlds";
 import {
   BOOSTER_PRICE,
   buyBooster,
@@ -94,6 +95,7 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [result, setResult] = useState<null | { won: boolean; stars: number; coins: number; newBest: boolean; nearMiss: number | null }>(null);
   const [starFlash, setStarFlash] = useState<number | null>(null);
+  const [intro, setIntro] = useState<Mechanic | null>(null);
   const prevShown = useRef(0);
   const { canInstall, install } = useInstallPrompt();
   const lang = settings.lang;
@@ -150,6 +152,7 @@ export default function App() {
     prevShown.current = 0;
     setResult(null);
     setHammer(false);
+    setIntro(level.number > 0 ? introFor(level.number) : null);
     setScreen("game");
   }, []);
 
@@ -405,31 +408,65 @@ export default function App() {
   }
 
   if (screen === "map") {
-    const max = nextLevel + 12;
+    const current = worldIndex(nextLevel);
+    const shown = Math.min(WORLD_IDS.length - 1, current + 1);
     return (
       <main className="app map">
         {topBar}
         <button className="back" onClick={() => setScreen("home")}>
           ← {t(lang, "home")}
         </button>
-        <ol className="path" aria-label={t(lang, "map")}>
-          {Array.from({ length: max }, (_, i) => max - i).map((n) => {
-            const locked = n > nextLevel;
-            return (
-              <li key={n} style={{ marginLeft: `${50 + Math.sin(n * 0.9) * 28}%` }}>
-                <button
-                  className={`node${locked ? " node--locked" : ""}${n === nextLevel ? " node--current" : ""}`}
-                  disabled={locked}
-                  onClick={() => startLevel(makeLevel(n))}
-                  ref={n === nextLevel ? (el) => el?.scrollIntoView({ block: "center" }) : undefined}
-                >
-                  {locked ? "🔒" : num(lang, n)}
-                </button>
-                {!locked && <Stars n={progress.stars[n] ?? 0} />}
-              </li>
-            );
-          })}
-        </ol>
+        {Array.from({ length: shown + 1 }, (_, w) => {
+          const id = WORLD_IDS[w];
+          const { first, last } = worldRange(w);
+          const locked = first > nextLevel;
+          const end = Math.min(last, Math.max(first + WORLD_SIZE - 1, nextLevel + 6));
+          const ws = worldStars(progress.stars, w);
+          const theme = WORLD_THEME[id];
+          return (
+            <section
+              key={id}
+              className={`chapter${locked ? " chapter--locked" : ""}`}
+              style={{ "--accent": theme.accent, "--deep": theme.deep } as React.CSSProperties}
+              aria-label={t(lang, `world_${id}`)}
+            >
+              <header className="chapter__head">
+                <span className="chapter__num">{num(lang, w + 1)}</span>
+                <div>
+                  <h2>{t(lang, `world_${id}`)}</h2>
+                  <p>{locked ? t(lang, "worldLocked", { n: num(lang, first) }) : t(lang, `worldBlurb_${id}`)}</p>
+                </div>
+                {!locked && (
+                  <span className="chapter__stars">
+                    ★ {num(lang, ws.got)}/{num(lang, ws.max)}
+                  </span>
+                )}
+              </header>
+              {!locked && (
+                <ol className="path">
+                  {Array.from({ length: end - first + 1 }, (_, i) => first + i).map((n) => {
+                    const lockedNode = n > nextLevel;
+                    const boss = planFor(n).stage === "boss";
+                    return (
+                      <li key={n} style={{ marginLeft: `${50 + Math.sin(n * 0.9) * 28}%` }}>
+                        <button
+                          className={`node${lockedNode ? " node--locked" : ""}${n === nextLevel ? " node--current" : ""}${boss ? " node--boss" : ""}`}
+                          disabled={lockedNode}
+                          aria-label={`${t(lang, "level")} ${n}${boss ? `, ${t(lang, "boss")}` : ""}`}
+                          onClick={() => startLevel(makeLevel(n))}
+                          ref={n === nextLevel ? (el) => el?.scrollIntoView({ block: "center" }) : undefined}
+                        >
+                          {lockedNode ? "🔒" : num(lang, n)}
+                        </button>
+                        {!lockedNode && <Stars n={progress.stars[n] ?? 0} />}
+                      </li>
+                    );
+                  })}
+                </ol>
+              )}
+            </section>
+          );
+        })}
         {settingsPanel}
       </main>
     );
@@ -446,7 +483,12 @@ export default function App() {
           ←
         </button>
         <div className="hud__goal">
-          <div className="hud__label">{isDaily ? t(lang, "daily") : `${t(lang, "level")} ${num(lang, lv.number)}`}</div>
+          <div className="hud__label">
+            {isDaily
+              ? t(lang, "daily")
+              : `${t(lang, `world_${WORLD_IDS[worldIndex(lv.number)]}`)} · ${num(lang, lv.number)}`}
+            {!isDaily && planFor(lv.number).stage === "boss" && <span className="chip">{t(lang, "boss")}</span>}
+          </div>
           <div className="hud__obj">
             {lv.objective.kind === "collect" && <GemIcon color={lv.objective.color} size={20} />}
             {objectiveText(lv)}
@@ -500,6 +542,18 @@ export default function App() {
           </button>
         ))}
       </nav>
+      {intro && !result && (
+        <div className="modal" role="dialog" aria-modal="true" aria-labelledby="intro-title">
+          <div className="sheet glass intro">
+            <span className="chip chip--new">{t(lang, "newThing")}</span>
+            <h2 id="intro-title">{t(lang, `intro_${intro}`)}</h2>
+            <p>{t(lang, `introBody_${intro}`)}</p>
+            <button className="btn btn--big" autoFocus onClick={() => setIntro(null)}>
+              {t(lang, "gotIt")}
+            </button>
+          </div>
+        </div>
+      )}
       {result && (
         <div className="modal" role="dialog" aria-modal="true">
           <div className={`sheet glass result ${result.won ? "result--win" : ""}`}>

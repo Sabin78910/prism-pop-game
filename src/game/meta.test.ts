@@ -18,12 +18,12 @@ describe("makeLevel", () => {
   });
   it("starts easy with fewer colours", () => {
     expect(makeLevel(1).colors).toBe(4);
-    expect(makeLevel(50).colors).toBe(6);
+    expect(makeLevel(71).colors).toBe(6);
     expect(makeLevel(1).objective.kind).toBe("score");
   });
-  it("cycles through objective kinds", () => {
+  it("mixes score and collect goals in the first world", () => {
     const kinds = new Set([3, 4, 5, 6, 7, 8].map((n) => makeLevel(n).objective.kind));
-    expect(kinds).toEqual(new Set(["score", "collect", "jelly"]));
+    expect(kinds).toEqual(new Set(["score", "collect"]));
   });
   it("never gives fewer than 15 moves and star thresholds rise", () => {
     for (let n = 1; n <= 300; n += 7) {
@@ -34,7 +34,8 @@ describe("makeLevel", () => {
     }
   });
   it("jelly levels count their jelly cells", () => {
-    const lv = [3, 4, 5, 6, 7].map((n) => makeLevel(n)).find((l) => l.objective.kind === "jelly")!;
+    const lv = makeLevel(16);
+    expect(lv.objective.kind).toBe("jelly");
     const cells = lv.jelly.flat().filter((x) => x > 0).length;
     expect(lv.objective).toEqual({ kind: "jelly", count: cells });
   });
@@ -88,7 +89,7 @@ describe("session", () => {
     }
   });
   it("loses when moves run out, and +5 moves revives", () => {
-    const s = startSession(makeLevel(9));
+    const s = startSession(makeLevel(31));
     s.movesLeft = 1;
     const [a, b] = findHint(s.grid)!;
     swap(s, a, b);
@@ -142,7 +143,7 @@ describe("session", () => {
     expect(res.steps.some((st) => st.blasts.length >= Math.min(FINALE_MAX, s.movesLeft))).toBe(true);
   });
   it("ice levels start with frozen gems and count progress as they are freed", () => {
-    const lv = makeLevel(9);
+    const lv = makeLevel(31);
     expect(lv.objective.kind).toBe("ice");
     const s = startSession(lv);
     expect(s.iceLeft).toBe(countIce(s.grid));
@@ -156,11 +157,10 @@ describe("session", () => {
     expect(["won", "lost"]).toContain(s.status);
     if (s.status === "won") expect(s.iceLeft).toBe(0);
   });
-  it("only some later levels are ice levels", () => {
-    expect(makeLevel(4).objective.kind).not.toBe("ice");
-    expect(makeLevel(14).objective.kind).toBe("ice");
-    expect(makeLevel(15).objective.kind).not.toBe("ice");
-    expect(makeLevel(39).ice!.flat().every((x) => x <= 2)).toBe(true);
+  it("ice arrives in the third world and never has more than two layers", () => {
+    for (let n = 1; n <= 30; n++) expect(makeLevel(n).ice).toBeUndefined();
+    expect(makeLevel(31).objective.kind).toBe("ice");
+    for (let n = 31; n <= 120; n++) expect((makeLevel(n).ice ?? []).flat().every((x) => x <= 2)).toBe(true);
   });
   it("rewards coins for stars and spare moves", () => {
     expect(coinReward(3, 4)).toBe(38);
