@@ -1,6 +1,9 @@
 import { memo } from "react";
 import { createRng } from "./game/rng";
 import { WORLD_THEME, type WorldId } from "./game/worlds";
+import cavesArt from "./assets/worlds/caves.webp";
+import frostArt from "./assets/worlds/frost.webp";
+import gardenArt from "./assets/worlds/garden.webp";
 
 /**
  * A full-screen scene behind every screen: night sky, stars and a world-specific skyline, all generated as
@@ -29,7 +32,22 @@ const SKYLINE: Record<WorldId, { far: string; near: string }> = {
   },
 };
 
+/**
+ * Painted backdrops made for Prism Pop in Canva (720x1280 WebP, about 40KB each). Worlds without one use the
+ * generated SVG scene below.
+ */
+export const WORLD_ART: Partial<Record<WorldId, string>> = { caves: cavesArt, garden: gardenArt, frost: frostArt };
+
+/** Darkens the painting so the panels and text on top keep their contrast. */
+const SHADE = "linear-gradient(180deg, rgba(11,5,32,.45) 0%, rgba(11,5,32,.15) 35%, rgba(11,5,32,.2) 70%, rgba(11,5,32,.6) 100%)";
+
 export const Scenery = memo(function Scenery({ world }: { world: WorldId }) {
+  const art = WORLD_ART[world];
+  if (art) return <div className="scenery scenery--art" aria-hidden="true" style={{ backgroundImage: `${SHADE}, url(${art})` }} />;
+  return <SkyScene world={world} />;
+});
+
+function SkyScene({ world }: { world: WorldId }) {
   const { accent, deep } = WORLD_THEME[world];
   const rng = createRng(7);
   const stars = Array.from({ length: 46 }, () => ({ x: rng() * 400, y: rng() * 230, r: 0.4 + rng() * 1.3, o: 0.3 + rng() * 0.7 }));
@@ -60,4 +78,4 @@ export const Scenery = memo(function Scenery({ world }: { world: WorldId }) {
       <path d={sky.near} fill="#0B0520" opacity="0.85" />
     </svg>
   );
-});
+}

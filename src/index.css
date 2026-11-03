@@ -88,6 +88,11 @@ input:focus-visible {
   z-index: 0;
   pointer-events: none;
 }
+.scenery--art {
+  background-color: var(--night-900);
+  background-size: cover;
+  background-position: center bottom;
+}
 .scenery__twinkle {
   animation: twinkle 3.2s ease-in-out infinite;
 }
