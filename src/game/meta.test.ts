@@ -10,7 +10,7 @@ import {
   saveProgress,
   spendBooster,
 } from "./progress";
-import { coinReward, FINALE_MAX, objectiveProgress, playFinale, startSession, starsFor, swap, useBooster } from "./session";
+import { coinReward, countIce, FINALE_MAX, objectiveProgress, playFinale, startSession, starsFor, swap, useBooster } from "./session";
 
 describe("makeLevel", () => {
   it("is deterministic", () => {
@@ -140,6 +140,27 @@ describe("session", () => {
     const res = swap(s, a, b);
     expect(s.status).toBe("won");
     expect(res.steps.some((st) => st.blasts.length >= Math.min(FINALE_MAX, s.movesLeft))).toBe(true);
+  });
+  it("ice levels start with frozen gems and count progress as they are freed", () => {
+    const lv = makeLevel(9);
+    expect(lv.objective.kind).toBe("ice");
+    const s = startSession(lv);
+    expect(s.iceLeft).toBe(countIce(s.grid));
+    expect(s.iceLeft).toBe(lv.objective.kind === "ice" ? lv.objective.count : -1);
+    expect(objectiveProgress(s)).toBe(0);
+    let guard = 0;
+    while (s.status === "playing" && guard++ < 100) {
+      const h = findHint(s.grid)!;
+      swap(s, h[0], h[1]);
+    }
+    expect(["won", "lost"]).toContain(s.status);
+    if (s.status === "won") expect(s.iceLeft).toBe(0);
+  });
+  it("only some later levels are ice levels", () => {
+    expect(makeLevel(4).objective.kind).not.toBe("ice");
+    expect(makeLevel(14).objective.kind).toBe("ice");
+    expect(makeLevel(15).objective.kind).not.toBe("ice");
+    expect(makeLevel(39).ice!.flat().every((x) => x <= 2)).toBe(true);
   });
   it("rewards coins for stars and spare moves", () => {
     expect(coinReward(3, 4)).toBe(38);

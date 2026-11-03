@@ -140,6 +140,7 @@ export function isValidSwap(grid: Grid, a: Pos, b: Pos): boolean {
   const ga = grid[a.r][a.c];
   const gb = grid[b.r][b.c];
   if (!ga || !gb) return false;
+  if (ga.ice || gb.ice) return false;
   if (ga.special === "prism" || gb.special === "prism") return true;
   if (ga.special !== "none" && gb.special !== "none") return true;
   const g = cloneGrid(grid);
@@ -172,16 +173,16 @@ export function findHint(grid: Grid): [Pos, Pos] | null {
   return best;
 }
 
-/** Shuffles gem positions (keeping gem ids) until there are no matches and a move exists. */
+/** Shuffles gem positions (keeping gem ids) until there are no matches and a move exists. Frozen gems stay put. */
 export function shuffleGrid(grid: Grid, rng: Rng): Grid {
-  const gems = grid.flat().filter((g): g is Gem => g !== null);
+  const gems = grid.flat().filter((g): g is Gem => g !== null && !g.ice);
   for (let attempt = 0; attempt < 200; attempt++) {
     for (let i = gems.length - 1; i > 0; i--) {
       const j = randInt(rng, i + 1);
       [gems[i], gems[j]] = [gems[j], gems[i]];
     }
     let k = 0;
-    const next: Grid = grid.map((row) => row.map((cell) => (cell ? gems[k++] : null)));
+    const next: Grid = grid.map((row) => row.map((cell) => (cell && !cell.ice ? gems[k++] : cell)));
     if (findMatches(next).length === 0 && findHint(next)) return next;
   }
   return grid;
