@@ -239,3 +239,29 @@ export function smash(input: Grid, p: Pos, ctx: ResolveContext): MoveResult {
   const first = finishStep(grid, res, [], 0, ctx);
   return { valid: true, steps: [first, ...settle(grid, ctx, 1)], grid };
 }
+
+/**
+ * Level-end finale: up to `count` random plain gems turn into line blasters, and they go off together with
+ * every special still on the board. Then the board settles. Pure spectacle and score; it never costs anything.
+ */
+export function finale(input: Grid, count: number, ctx: ResolveContext): MoveResult {
+  const grid = cloneGrid(input);
+  const plain: Pos[] = [];
+  const start: Pos[] = [];
+  for (const p of allCells(grid)) {
+    const gem = grid[p.r][p.c];
+    if (!gem) continue;
+    if (gem.special !== "none") start.push(p);
+    else if (gem.color >= 0) plain.push(p);
+  }
+  for (let i = 0; i < count && plain.length; i++) {
+    const p = plain.splice(randInt(ctx.rng, plain.length), 1)[0];
+    const gem = grid[p.r][p.c]!;
+    grid[p.r][p.c] = { ...gem, special: randInt(ctx.rng, 2) ? "lineH" : "lineV" };
+    start.push(p);
+  }
+  if (start.length === 0) return { valid: false, steps: [], grid: input };
+  const res = clearChain(grid, start, ctx, new Set());
+  const first = finishStep(grid, res, [], 1, ctx);
+  return { valid: true, steps: [first, ...settle(grid, ctx, 2)], grid };
+}

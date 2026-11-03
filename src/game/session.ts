@@ -1,5 +1,5 @@
 import { createGrid, findHint, shuffleGrid } from "./board";
-import { playMove, smash, type ResolveContext } from "./resolve";
+import { finale, playMove, smash, type ResolveContext } from "./resolve";
 import { createRng } from "./rng";
 import type { Grid, Level, Pos, Step } from "./types";
 
@@ -63,6 +63,22 @@ function checkEnd(s: Session): void {
   else if (s.movesLeft <= 0) s.status = "lost";
 }
 
+/** Most leftover moves that turn into blasters at the end, so the finale stays short. */
+export const FINALE_MAX = 12;
+
+/**
+ * On a win, leftover moves become line blasters and every special left on the board goes off.
+ * Adds score (so it can lift the star count) but never changes moves or coins. Returns the steps to animate.
+ */
+export function playFinale(s: Session): Step[] {
+  if (s.status !== "won") return [];
+  const res = finale(s.grid, Math.min(FINALE_MAX, Math.max(0, s.movesLeft)), s.ctx);
+  if (!res.valid) return [];
+  s.grid = res.grid;
+  applySteps(s, res.steps);
+  return res.steps;
+}
+
 export interface TurnResult {
   valid: boolean;
   steps: Step[];
@@ -85,7 +101,8 @@ export function swap(s: Session, a: Pos, b: Pos): TurnResult {
   s.movesLeft--;
   applySteps(s, res.steps);
   checkEnd(s);
-  return { valid: true, steps: res.steps, shuffled: s.status === "playing" && ensureMove(s) };
+  const steps = [...res.steps, ...playFinale(s)];
+  return { valid: true, steps, shuffled: s.status === "playing" && ensureMove(s) };
 }
 
 export type Booster = "hammer" | "shuffle" | "moves";
@@ -110,7 +127,8 @@ export function useBooster(s: Session, booster: Booster, at?: Pos): TurnResult {
   s.grid = res.grid;
   applySteps(s, res.steps);
   checkEnd(s);
-  return { valid: true, steps: res.steps, shuffled: s.status === "playing" && ensureMove(s) };
+  const steps = [...res.steps, ...playFinale(s)];
+  return { valid: true, steps, shuffled: s.status === "playing" && ensureMove(s) };
 }
 
 /** Coins earned for finishing a level: 10 per star plus 2 per unused move. */

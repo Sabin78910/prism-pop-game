@@ -1,5 +1,5 @@
 import { createGrid, findHint, findMatches, isValidSwap, shuffleGrid, specialFor } from "./board";
-import { blastArea, playMove, smash, type ResolveContext } from "./resolve";
+import { blastArea, finale, playMove, smash, type ResolveContext } from "./resolve";
 import { createRng, hashString } from "./rng";
 import type { Grid, Special } from "./types";
 
@@ -287,5 +287,29 @@ describe("smash", () => {
   it("fails on an empty cell", () => {
     const res = smash(g(["0.1"]), { r: 0, c: 1 }, ctx(3, 1, 3));
     expect(res.valid).toBe(false);
+  });
+});
+
+describe("finale", () => {
+  it("turns leftover moves into blasters that go off, and refills the board", () => {
+    const grid = g(["01212", "23030", "12121", "30303", "13131"]);
+    const res = finale(grid, 3, ctx());
+    expect(res.valid).toBe(true);
+    expect(res.steps[0].blasts.length).toBeGreaterThanOrEqual(3);
+    expect(res.steps[0].blasts.every((b) => b.special === "lineH" || b.special === "lineV")).toBe(true);
+    expect(res.steps[0].score).toBeGreaterThan(0);
+    expect(colorsLeft(res.grid)).toBe(true);
+    expect(grid[0][0]!.special).toBe("none"); // input untouched
+  });
+  it("sets off specials left on the board even with no moves left", () => {
+    const grid = g(["01212", "23030", "12121", "30303", "13131"]);
+    setSpecial(grid, 2, 2, "bomb");
+    const res = finale(grid, 0, ctx());
+    expect(res.valid).toBe(true);
+    expect(res.steps[0].blasts).toContainEqual({ pos: { r: 2, c: 2 }, special: "bomb" });
+  });
+  it("does nothing with no moves and no specials", () => {
+    const grid = g(["01212", "23030", "12121", "30303", "13131"]);
+    expect(finale(grid, 0, ctx()).valid).toBe(false);
   });
 });
