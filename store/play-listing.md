@@ -11,7 +11,9 @@ Prism Pop is a bright, satisfying match-3 puzzle you can play as long as you lik
 🌈 Swap two power gems together for huge combos
 🗺️ Unlimited levels with score, collect and jelly goals, each with 1-3 stars to earn
 🔥 Daily Challenge: the same board for everyone today. Keep your streak alive!
+🎯 Three new daily missions and trophies to collect
 🔨 Earn coins and use Hammer, Shuffle and +5 Moves boosters
+🔄 Optional sync: keep the same progress on your phone and laptop, end-to-end encrypted
 🎨 Every gem has its own shape, so it's colour-blind friendly. Reduced-motion mode included.
 🇳🇵 English and नेपाली
 📴 Works offline
@@ -20,4 +22,5 @@ Prism Pop is a bright, satisfying match-3 puzzle you can play as long as you lik
 match 3, gem puzzle, jewel game, puzzle game offline, no lives puzzle, combo game, daily puzzle, casual game, brain game, Nepali game
 
 Category: Games › Puzzle · Content rating: Everyone · Contains ads: No · In-app purchases: No
-Privacy policy: https://sabin78910.github.io/privacy-policy/
+Privacy policy: https://sabin78910.github.io/privacy-policy/#prism-pop
+Data safety and app content answers: `store/data-safety.md`. The same text for fastlane is in `fastlane/metadata/android/en-US/`.
