@@ -41,6 +41,7 @@ import { CountUp, useCoinFlight } from "./Motion";
 import { Scenery } from "./Scenery";
 import { walletDelay, coinFlightCount } from "./game/countUp";
 import { SyncPanel } from "./SyncPanel";
+import { loadStreak, nextStreak, saveStreak, streakBonus } from "./game/streak";
 import { levelGain, rankFor, rankPoints, TIER_COLORS, type Rank } from "./game/ranks";
 import { useProgressSync } from "./useProgressSync";
 
@@ -106,7 +107,7 @@ export default function App() {
   const [hammer, setHammer] = useState(false);
   const [shownScore, setShownScore] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
-  const [result, setResult] = useState<null | { won: boolean; stars: number; coins: number; newBest: boolean; nearMiss: number | null; rp: number; rankUp: Rank | null }>(null);
+  const [result, setResult] = useState<null | { won: boolean; stars: number; coins: number; newBest: boolean; nearMiss: number | null; rp: number; rankUp: Rank | null; streak: number; bonus: number }>(null);
   const [starFlash, setStarFlash] = useState<number | null>(null);
   const [intro, setIntro] = useState<Mechanic | null>(null);
   const [preview, setPreview] = useState(false);
@@ -114,6 +115,7 @@ export default function App() {
   const [confirmReset, setConfirmReset] = useState(false);
   const [assistLog, setAssistLog] = useState(() => loadAssist(storage));
   const [assistExtra, setAssistExtra] = useState(0);
+  const [winStreak, setWinStreak] = useState(() => loadStreak(storage));
   const prevShown = useRef(0);
   const rewardRef = useRef<HTMLSpanElement>(null);
   const coinFlight = useCoinFlight(settings.reduceMotion);
@@ -140,6 +142,7 @@ export default function App() {
   useEffect(() => saveProgress(storage, progress), [progress]);
   useEffect(() => saveMissions(storage, missions), [missions]);
   useEffect(() => saveAssist(storage, assistLog), [assistLog]);
+  useEffect(() => saveStreak(storage, winStreak), [winStreak]);
   const sync = useProgressSync(progress, setProgress);
 
   // Score counts up smoothly instead of jumping.
@@ -187,9 +190,13 @@ export default function App() {
   const finish = useCallback(
     (s: Session) => {
       if (s.status === "won" || s.status === "lost") setAssistLog((log) => recordResult(log, s.level.number, s.status === "won"));
+      const onMap = s.level.number > 0;
+      const streak = onMap ? nextStreak(winStreak, s.status === "won") : winStreak;
+      if (onMap && (s.status === "won" || s.status === "lost")) setWinStreak(streak);
       if (s.status === "won") {
         const stars = Math.max(1, starsFor(s.level, s.score));
-        const coins = coinReward(stars, s.movesLeft);
+        const bonus = onMap ? streakBonus(streak) : 0;
+        const coins = coinReward(stars, s.movesLeft) + bonus;
         setProgress((p) =>
           s.level.number === 0 ? recordDaily(p, today, coins) : recordWin(p, s.level.number, stars, s.score, coins),
         );
@@ -199,16 +206,16 @@ export default function App() {
         const rp = levelGain(before, stars);
         const from = rankFor(rankPoints(progress.stars));
         const to = rankFor(from.points + rp);
-        setResult({ won: true, stars, coins, newBest, nearMiss: null, rp, rankUp: to.step > from.step ? to : null });
+        setResult({ won: true, stars, coins, newBest, nearMiss: null, rp, rankUp: to.step > from.step ? to : null, streak, bonus });
         sfx.win();
-        if (newBest) sfx.record();
+        if (newBest || to.step > from.step) sfx.record();
         if (settings.haptics && "vibrate" in navigator) navigator.vibrate(hapticPattern("win", true));
       } else if (s.status === "lost") {
-        setResult({ won: false, stars: 0, coins: 0, newBest: false, nearMiss: nearMissPercent(objectiveProgress(s)), rp: 0, rankUp: null });
+        setResult({ won: false, stars: 0, coins: 0, newBest: false, nearMiss: nearMissPercent(objectiveProgress(s)), rp: 0, rankUp: null, streak: 0, bonus: 0 });
         sfx.lose();
       }
     },
-    [settings.haptics, today, progress.best, progress.stars],
+    [settings.haptics, today, progress.best, progress.stars, winStreak],
   );
 
   const onSettled = useCallback(() => {
@@ -764,6 +771,11 @@ export default function App() {
             {result.rankUp && (
               <p className="result__rankup display" role="status" style={{ "--tier": TIER_COLORS[result.rankUp.tier] } as React.CSSProperties}>
                 {t(lang, "rankUp", { rank: rankName(result.rankUp) })}
+              </p>
+            )}
+            {result.bonus > 0 && (
+              <p className="result__streak">
+                <Icon name="flame" size={18} /> {t(lang, "winStreak", { n: num(lang, result.streak), c: num(lang, result.bonus) })}
               </p>
             )}
             {result.newBest && <p className="result__best">{t(lang, "newBest")}</p>}
