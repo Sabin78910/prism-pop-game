@@ -41,6 +41,7 @@ import { CountUp, useCoinFlight } from "./Motion";
 import { Scenery } from "./Scenery";
 import { walletDelay, coinFlightCount } from "./game/countUp";
 import { SyncPanel } from "./SyncPanel";
+import { levelGain, rankFor, rankPoints, TIER_COLORS, type Rank } from "./game/ranks";
 import { useProgressSync } from "./useProgressSync";
 
 type Screen = "home" | "map" | "game";
@@ -105,7 +106,7 @@ export default function App() {
   const [hammer, setHammer] = useState(false);
   const [shownScore, setShownScore] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
-  const [result, setResult] = useState<null | { won: boolean; stars: number; coins: number; newBest: boolean; nearMiss: number | null }>(null);
+  const [result, setResult] = useState<null | { won: boolean; stars: number; coins: number; newBest: boolean; nearMiss: number | null; rp: number; rankUp: Rank | null }>(null);
   const [starFlash, setStarFlash] = useState<number | null>(null);
   const [intro, setIntro] = useState<Mechanic | null>(null);
   const [preview, setPreview] = useState(false);
@@ -194,16 +195,20 @@ export default function App() {
         );
         setMissions((m) => recordFinish(m, today, { won: true, daily: s.level.number === 0, bestCombo: s.bestCombo }));
         const newBest = s.level.number > 0 && isNewBest(progress.best[s.level.number], s.score);
-        setResult({ won: true, stars, coins, newBest, nearMiss: null });
+        const before = s.level.number > 0 ? (progress.stars[s.level.number] ?? 0) : 3;
+        const rp = levelGain(before, stars);
+        const from = rankFor(rankPoints(progress.stars));
+        const to = rankFor(from.points + rp);
+        setResult({ won: true, stars, coins, newBest, nearMiss: null, rp, rankUp: to.step > from.step ? to : null });
         sfx.win();
         if (newBest) sfx.record();
         if (settings.haptics && "vibrate" in navigator) navigator.vibrate(hapticPattern("win", true));
       } else if (s.status === "lost") {
-        setResult({ won: false, stars: 0, coins: 0, newBest: false, nearMiss: nearMissPercent(objectiveProgress(s)) });
+        setResult({ won: false, stars: 0, coins: 0, newBest: false, nearMiss: nearMissPercent(objectiveProgress(s)), rp: 0, rankUp: null });
         sfx.lose();
       }
     },
-    [settings.haptics, today, progress.best],
+    [settings.haptics, today, progress.best, progress.stars],
   );
 
   const onSettled = useCallback(() => {
@@ -258,6 +263,8 @@ export default function App() {
   const nextLevel = progress.unlocked;
   const streak = liveStreak(progress, today);
   const dailyDone = progress.daily.lastDone === today;
+  const rank = useMemo(() => rankFor(rankPoints(progress.stars)), [progress.stars]);
+  const rankName = (r: Rank) => `${t(lang, `tier_${r.tier}`)}${r.division ? ` ${r.division}` : ""}`;
   const totalStars = useMemo(() => Object.values(progress.stars).reduce((a, b) => a + b, 0), [progress.stars]);
 
   const world = WORLD_IDS[worldIndex(screen === "game" && session && session.level.number > 0 ? session.level.number : nextLevel)];
@@ -521,6 +528,18 @@ export default function App() {
                 <div className="bar__fill" style={{ width: `${(ws.got / ws.max) * 100}%` }} />
               </div>
             </div>
+            <div className="rank-card panel" style={{ "--tier": TIER_COLORS[rank.tier] } as React.CSSProperties}>
+              <span className="rank-card__badge" aria-hidden="true">
+                <Icon name="trophy" />
+              </span>
+              <span className="rank-card__name display">{rankName(rank)}</span>
+              <span className="rank-card__sub">
+                {rank.toNext > 0 ? t(lang, "rankToNext", { n: num(lang, rank.toNext) }) : t(lang, "rankTop")}
+              </span>
+              <div className="bar" aria-label={`${t(lang, "rank")}: ${rankName(rank)}`}>
+                <div className="bar__fill" style={{ width: `${rank.fill * 100}%` }} />
+              </div>
+            </div>
             <button className="btn btn--play" onClick={() => startLevel(makeLevel(nextLevel))}>
               {t(lang, "play")}
               <small>{t(lang, "playLevel", { n: num(lang, nextLevel) })}</small>
@@ -741,6 +760,12 @@ export default function App() {
             <p className="result__score">
               <CountUp value={session.score} from={0} delay={250} lang={lang} reduce={settings.reduceMotion} />
             </p>
+            {result.rp > 0 && <p className="result__rank">{t(lang, "rankGain", { n: num(lang, result.rp) })}</p>}
+            {result.rankUp && (
+              <p className="result__rankup display" role="status" style={{ "--tier": TIER_COLORS[result.rankUp.tier] } as React.CSSProperties}>
+                {t(lang, "rankUp", { rank: rankName(result.rankUp) })}
+              </p>
+            )}
             {result.newBest && <p className="result__best">{t(lang, "newBest")}</p>}
             {result.nearMiss !== null && <p>{t(lang, "soClose", { n: result.nearMiss })}</p>}
             {!result.won && settings.assist && !isDaily && assistMoves(assistLog[lv.number] ?? 0) > assistExtra && (

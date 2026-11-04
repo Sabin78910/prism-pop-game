@@ -1309,3 +1309,48 @@ input:focus-visible {
     display: none;
   }
 }
+
+/* Level rank, Bronze to King */
+.rank-card {
+  padding: 12px 16px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 12px;
+  align-items: center;
+}
+.rank-card__badge {
+  grid-row: 1 / span 2;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 3px solid var(--outline);
+  background: var(--tier);
+  color: #140a2e;
+}
+.rank-card__name {
+  font-size: 20px;
+  color: var(--tier);
+}
+.rank-card__sub {
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+.rank-card .bar__fill {
+  background: var(--tier);
+}
+.result__rank {
+  font-family: var(--display);
+  color: var(--ink-soft);
+}
+.result__rankup {
+  color: var(--tier) !important;
+  font-size: 22px !important;
+  animation: popIn 0.4s 1s var(--spring) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .result__rankup {
+    animation: none;
+  }
+}
