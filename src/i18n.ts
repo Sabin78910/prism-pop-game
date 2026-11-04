@@ -116,6 +116,20 @@ const en = {
   goalLabel_ice: "{n} frozen left",
   playLevel: "Level {n}",
   privacy: "Privacy",
+  rank: "Rank",
+  rankToNext: "{n} RP to next rank",
+  rankTop: "Top rank reached",
+  rankGain: "+{n} RP",
+  rankUp: "Rank up! {rank}",
+  tier_bronze: "Bronze",
+  tier_silver: "Silver",
+  tier_gold: "Gold",
+  tier_diamond: "Diamond",
+  tier_crown: "Crown",
+  tier_master: "Master",
+  tier_champion: "Champion",
+  tier_legend: "Legend",
+  tier_king: "King",
 };
 
 const ne: typeof en = {
@@ -234,6 +248,20 @@ const ne: typeof en = {
   goalLabel_ice: "{n} जमेका बाँकी",
   playLevel: "तह {n}",
   privacy: "गोपनीयता",
+  rank: "श्रेणी",
+  rankToNext: "अर्को श्रेणीसम्म {n} RP",
+  rankTop: "सर्वोच्च श्रेणी पुगियो",
+  rankGain: "+{n} RP",
+  rankUp: "श्रेणी बढ्यो! {rank}",
+  tier_bronze: "कांस्य",
+  tier_silver: "चाँदी",
+  tier_gold: "सुन",
+  tier_diamond: "हीरा",
+  tier_crown: "मुकुट",
+  tier_master: "मास्टर",
+  tier_champion: "च्याम्पियन",
+  tier_legend: "लिजेन्ड",
+  tier_king: "राजा",
 };
 
 export type Key = keyof typeof en;
