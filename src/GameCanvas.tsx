@@ -1,5 +1,8 @@
 import { useEffect, useRef } from "react";
 import { findHint, isAdjacent } from "./game/board";
+import { hintDelay, learnPace, loadPace, savePace } from "./game/pace";
+
+const paceStore = typeof localStorage !== "undefined" ? localStorage : undefined;
 import { GEM_COLORS, gemSprite } from "./game/gemArt";
 import { comboWord, hapticPattern, scorePopup } from "./game/feedback";
 import { effectProgress, hitStopMs, stepEffects, type Effect } from "./game/effects";
@@ -71,6 +74,9 @@ export function GameCanvas(props: Props) {
     drag: null as { pos: Pos; x: number; y: number } | null,
     shake: 0,
     lastInput: performance.now(),
+    /** When the previous move started; think time is measured from here. */
+    turnAt: performance.now(),
+    pace: loadPace(paceStore),
     hint: null as [Pos, Pos] | null,
     swapAnim: null as null | { a: Pos; b: Pos; t: number; back: boolean },
     cell: 40,
@@ -148,7 +154,7 @@ export function GameCanvas(props: Props) {
         ctx.fill();
       };
       if (s.selected) glow(s.selected, 0.35);
-      if (!s.busy && now - s.lastInput > 5000) {
+      if (!s.busy && now - s.lastInput > hintDelay(s.pace)) {
         s.hint ??= findHint(s.grid);
         if (s.hint) {
           const a = 0.18 + 0.18 * Math.sin(now / 180);
@@ -386,6 +392,9 @@ export function GameCanvas(props: Props) {
     s.lastInput = performance.now();
     s.hint = null;
     if (swapPair) {
+      s.pace = learnPace(s.pace, s.lastInput - s.turnAt);
+      s.turnAt = s.lastInput;
+      savePace(paceStore, s.pace);
       s.swapAnim = { a: swapPair[0], b: swapPair[1], t: 0, back: false };
       sfx.swap();
     }
