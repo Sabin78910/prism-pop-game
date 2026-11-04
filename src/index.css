@@ -939,6 +939,12 @@ input:focus-visible {
   width: 76px;
   height: 70px;
 }
+/* A score goal holds a star and a number side by side: let it grow so the number stays inside. */
+.goal-preview .goal--wide {
+  width: auto;
+  padding: 0 16px 0 12px;
+  gap: 10px;
+}
 .chip {
   display: inline-block;
   align-self: center;
