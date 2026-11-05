@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { GameCanvas } from "./GameCanvas";
 import { Icon } from "./Icon";
 import { sfx } from "./audio";
@@ -9,7 +9,7 @@ import { easeTowards, hapticPattern, isNewBest, nearMissPercent, starsCrossed } 
 import { activeTheme, BOARD_THEMES, THEME_IDS, themeUnlocked } from "./game/themes";
 import { assistMoves, loadAssist, recordResult, saveAssist, withAssist } from "./game/assist";
 import { dailyKey, makeDailyLevel, makeLevel } from "./game/level";
-import { introFor, planFor, WORLD_IDS, WORLD_SIZE, WORLD_THEME, worldIndex, worldRange, worldStars, type Mechanic } from "./game/worlds";
+import { introFor, planFor, WORLD_IDS, WORLD_SIZE, WORLD_THEME, worldIndex, worldRange, worldStars, upNext, type Mechanic } from "./game/worlds";
 import {
   BOOSTER_PRICE,
   buyBooster,
@@ -367,7 +367,7 @@ export default function App() {
               aria-checked={on}
               disabled={!open}
               className={`swatch${on ? " swatch--on" : ""}`}
-              style={{ "--swatch": BOARD_THEMES[id].swatch } as React.CSSProperties}
+              style={{ "--swatch": BOARD_THEMES[id].swatch } as CSSProperties}
               aria-label={open ? name : `${name}: ${t(lang, "themeLocked", { world: name })}`}
               title={open ? name : t(lang, "themeLocked", { world: name })}
               onClick={() => setSettings({ ...settings, theme: id })}
@@ -495,7 +495,7 @@ export default function App() {
     return (
       <>
         <Scenery world={world} />
-        <main className="app home" style={{ "--accent": WORLD_THEME[world].accent } as React.CSSProperties}>
+        <main className="app home" style={{ "--accent": WORLD_THEME[world].accent } as CSSProperties}>
           {topBar}
           <section className="home__brand">
             <h1 className="logo">
@@ -571,7 +571,7 @@ export default function App() {
               <section
                 key={id}
                 className={`chapter panel${locked ? " chapter--locked" : ""}`}
-                style={{ "--accent": WORLD_THEME[id].accent } as React.CSSProperties}
+                style={{ "--accent": WORLD_THEME[id].accent } as CSSProperties}
                 aria-label={t(lang, `world_${id}`)}
               >
                 <Ribbon>{t(lang, `world_${id}`)}</Ribbon>
@@ -637,7 +637,7 @@ export default function App() {
     <>
       <Scenery world={world} />
       {coinFlight.layer}
-      <main className="app game" style={{ "--accent": WORLD_THEME[isDaily ? "spire" : world].accent } as React.CSSProperties}>
+      <main className="app game" style={{ "--accent": WORLD_THEME[isDaily ? "spire" : world].accent } as CSSProperties}>
         <header className="hud panel">
           <button className="btn btn--ghost round" onClick={() => setScreen("home")} aria-label={t(lang, "home")}>
             <Icon name="back" size={24} />
@@ -746,6 +746,7 @@ export default function App() {
             {!result.won && settings.assist && !isDaily && assistMoves(assistLog[lv.number] ?? 0) > assistExtra && (
               <p>{t(lang, "assistNext", { n: assistMoves(assistLog[lv.number] ?? 0) })}</p>
             )}
+            {result.won && !isDaily && <UpNextLine lang={lang} won={lv.number} />}
             {session.bestCombo > 1 && (
               <p className="result__line">
                 {t(lang, "bestCombo")}: ×{num(lang, session.bestCombo + 1)}
@@ -802,5 +803,17 @@ export default function App() {
         {settingsPanel}
       </main>
     </>
+  );
+}
+
+/** Foreshadows what is coming after a win: the boss, a new world, or the distance to the boss. */
+function UpNextLine({ lang, won }: { lang: Lang; won: number }) {
+  const u = upNext(won);
+  const world = t(lang, `world_${u.world}`);
+  const text = u.kind === "boss" ? t(lang, "nextBoss", { world }) : u.kind === "world" ? t(lang, "nextWorld", { world }) : t(lang, "toBoss", { world, n: num(lang, u.left) });
+  return (
+    <p className={`result__next result__next--${u.kind}`} style={{ "--world": WORLD_THEME[u.world].accent } as CSSProperties}>
+      {text}
+    </p>
   );
 }

@@ -1,5 +1,5 @@
 import { makeLevel } from "./level";
-import { introFor, planFor, WORLD_IDS, WORLD_SIZE, worldIndex, worldRange, worldStars } from "./worlds";
+import { introFor, planFor, WORLD_IDS, WORLD_SIZE, worldIndex, worldRange, worldStars, upNext } from "./worlds";
 
 describe("worlds", () => {
   it("splits levels into worlds of 15 and keeps the last world going", () => {
@@ -49,5 +49,21 @@ describe("worlds", () => {
   it("counts a world's stars", () => {
     expect(worldStars({ 1: 3, 2: 2, 16: 1 }, 0)).toEqual({ got: 5, max: 45 });
     expect(worldStars({ 76: 3 }, 4)).toEqual({ got: 0, max: 45 });
+  });
+});
+
+describe("upNext", () => {
+  it("counts down to the world's boss", () => {
+    expect(upNext(1)).toEqual({ kind: "toBoss", world: "caves", left: 13 });
+    expect(upNext(13)).toEqual({ kind: "toBoss", world: "caves", left: 1 });
+  });
+  it("flags the boss and the next world", () => {
+    expect(upNext(14)).toEqual({ kind: "boss", world: "caves" });
+    expect(upNext(15)).toEqual({ kind: "world", world: "garden" });
+  });
+  it("keeps a boss every world length in the endless last world", () => {
+    expect(upNext(74)).toEqual({ kind: "boss", world: "spire" });
+    expect(upNext(89)).toEqual({ kind: "boss", world: "spire" });
+    expect(upNext(90)).toEqual({ kind: "toBoss", world: "spire", left: 14 });
   });
 });

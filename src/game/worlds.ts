@@ -96,3 +96,19 @@ export function worldStars(stars: Record<number, number>, w: number): { got: num
   for (let n = first; n <= end; n++) got += stars[n] ?? 0;
   return { got, max: (end - first + 1) * 3 };
 }
+
+export type UpNext = { kind: "boss"; world: WorldId } | { kind: "world"; world: WorldId } | { kind: "toBoss"; world: WorldId; left: number };
+
+/**
+ * What the player can look forward to after winning level `won`: the boss is next, a new world opens next,
+ * or how many levels remain until this world's boss. Foreshadowed content is what keeps a puzzle game fresh.
+ */
+export function upNext(won: number): UpNext {
+  const next = Math.max(1, won) + 1;
+  const w = worldIndex(next);
+  const world = WORLD_IDS[w];
+  if (w > worldIndex(won)) return { kind: "world", world };
+  const index = (next - 1) % WORLD_SIZE;
+  if (index === WORLD_SIZE - 1) return { kind: "boss", world };
+  return { kind: "toBoss", world, left: WORLD_SIZE - 1 - index };
+}

@@ -1004,6 +1004,25 @@ input:focus-visible {
   font-size: 20px !important;
   animation: popIn 0.4s 0.8s var(--spring) both;
 }
+.result__next {
+  margin: 4px 0 0;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--world) 45%, transparent);
+  background: color-mix(in srgb, var(--world) 12%, transparent);
+  color: var(--text) !important;
+  font-weight: 600;
+  animation: popIn 0.4s 1.1s var(--spring) both;
+}
+.result__next--boss,
+.result__next--world {
+  box-shadow: 0 0 24px color-mix(in srgb, var(--world) 35%, transparent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .result__next {
+    animation: none;
+  }
+}
 .reward {
   display: inline-flex;
   align-items: center;
