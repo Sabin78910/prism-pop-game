@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useId, type ReactNode } from "react";
 
 /** Small shared pieces of the Prism Pop UI kit (see docs/DESIGN-SYSTEM.md). */
 
@@ -46,6 +46,7 @@ export function Sheet({
   className?: string;
   labelledBy?: string;
 }) {
+  const titleId = useId();
   useEffect(() => {
     if (!onClose) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -57,11 +58,15 @@ export function Sheet({
       className="modal"
       role="dialog"
       aria-modal="true"
-      aria-labelledby={labelledBy}
+      aria-labelledby={labelledBy ?? (title ? titleId : undefined)}
       onClick={(e) => e.target === e.currentTarget && onClose?.()}
     >
       <div className={`sheet panel ${className}`}>
-        {title && <Ribbon tone={tone}>{title}</Ribbon>}
+        {title && (
+          <Ribbon tone={tone}>
+            <span id={titleId}>{title}</span>
+          </Ribbon>
+        )}
         {children}
       </div>
     </div>
