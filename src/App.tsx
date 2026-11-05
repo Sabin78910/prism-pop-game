@@ -41,6 +41,7 @@ import { CountUp, useCoinFlight } from "./Motion";
 import { Scenery } from "./Scenery";
 import { walletDelay, coinFlightCount } from "./game/countUp";
 import { SyncPanel } from "./SyncPanel";
+import { AccountRow } from "./AccountRow";
 import { loadStreak, nextStreak, saveStreak, streakBonus } from "./game/streak";
 import { levelGain, rankFor, rankPoints, TIER_COLORS, type Rank } from "./game/ranks";
 import { useProgressSync } from "./useProgressSync";
@@ -391,6 +392,7 @@ export default function App() {
           );
         })}
       </div>
+      <AccountRow lang={lang} />
       <SyncPanel
         lang={lang}
         code={sync.code}
