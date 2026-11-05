@@ -1539,6 +1539,20 @@ body {
   filter: none;
   animation-duration: 5s;
 }
+/* On narrow phones the gems shrink to fit instead of pushing the page sideways. */
+.hero-gems {
+  min-width: 0;
+  max-width: 100%;
+}
+.hero-gems span {
+  min-width: 0;
+  flex-shrink: 1;
+}
+.hero-gems canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
 .hero-gems span:nth-child(2),
 .hero-gems span:nth-child(4) {
   margin-top: 0;
