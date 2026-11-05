@@ -298,7 +298,7 @@ export function GameCanvas(props: Props) {
         ctx.globalAlpha = a;
         // Pops in with a little overshoot, then settles.
         const pop = p.reducedMotion ? 1 : 1 + 0.35 * Math.max(0, t.life - 0.8) * 5;
-        ctx.font = `700 ${Math.round(cell * t.size * pop)}px Fredoka, system-ui, sans-serif`;
+        ctx.font = `700 ${Math.round(cell * t.size * pop)}px Sora, system-ui, sans-serif`;
         ctx.textAlign = "center";
         ctx.lineWidth = cell * 0.12;
         ctx.strokeStyle = "#3b0a6e";

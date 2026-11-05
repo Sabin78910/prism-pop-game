@@ -1,5 +1,11 @@
 # Prism Pop design system
 
+> **Prism Noir (November 2026).** The chunky outlined style below is superseded on the surface layer: ink
+> stage `#0B0A14`, hairline glass panels (1px white at 10%, 18px blur), one spectral gradient
+> (`#8B5CFF → #5B7CFF → #19C8FF`) for the main action, Sora 600/800 display type with no text outline, and
+> the scene art dimmed to half brightness so the gems are the most saturated thing on screen. Structure,
+> motion and layout rules below still apply. The override layer is at the end of `src/index.css`.
+
 Prism Pop should look like a game from a top studio, not a web page. This file is the source of truth for
 how every screen looks and moves. `docs/DESIGN-AUDIT.md` scores the app against it.
 
