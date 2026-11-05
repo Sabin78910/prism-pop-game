@@ -35,8 +35,11 @@ class Sfx {
 
   pop(combo: number): void {
     const f = popFrequency(combo);
-    this.tone(f, 0.14, "sine", 0.18);
+    // A crisp click on top of a round body, with a fifth that joins in once a combo gets going.
+    this.tone(f * 3, 0.03, "sine", 0.06);
+    this.tone(f, 0.16, "sine", 0.18, 0, f * 1.12);
     this.tone(f * 1.5, 0.1, "triangle", 0.08, 0.03);
+    if (combo >= 3) this.tone(f * 2, 0.18, "sine", 0.07, 0.05);
   }
   swap(): void {
     this.tone(320, 0.08, "triangle", 0.06, 0, 520);

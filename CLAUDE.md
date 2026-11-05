@@ -3,7 +3,8 @@ Original match-3 gem puzzle. No lives, no energy timers, no forced ads.
 
 ## Stack
 React 19 · TypeScript (strict) · Vite · Vitest · ESLint. Installable PWA with offline support.
-Design: night violet #140A2E, six gem colours each with its own shape, Fredoka display.
+Design: "Prism Noir", ink #0B0A14 lit by soft spectral light, six faceted gem colours each with its own shape,
+Sora display + Inter body. See `docs/DESIGN-SYSTEM.md`.
 
 ## Commands
 - Dev: `npm run dev` · Build: `npm run build`

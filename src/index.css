@@ -1,12 +1,12 @@
-/* Prism Pop UI kit. Tokens and components follow docs/DESIGN-SYSTEM.md. */
+/* Prism Pop UI kit, "Prism Noir". Tokens and components follow docs/DESIGN-SYSTEM.md. */
 :root {
-  --night-900: #0b0520;
-  --night-800: #170a3a;
-  --panel-a: #2b1767;
-  --panel-b: #1e0f4a;
-  --panel-edge: #5b3bc4;
+  --night-900: #0b0a14;
+  --night-800: #14121f;
+  --panel-a: #1b1929;
+  --panel-b: #12101d;
+  --panel-edge: #34304a;
   --ink: #ffffff;
-  --ink-soft: #cbbef5;
+  --ink-soft: #b9b4cc;
   --outline: #1a0b3b;
   /* Hairline edges and soft elevation replace the old thick outlines and hard bevels. */
   --edge: rgba(255, 255, 255, 0.12);
@@ -26,7 +26,7 @@
   --r-btn: 16px;
   --r-panel: 24px;
   --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --display: Fredoka, "Noto Sans Devanagari", system-ui, sans-serif;
+  --display: Sora, "Noto Sans Devanagari", system-ui, sans-serif;
   color-scheme: dark;
   font-family: Inter, "Noto Sans Devanagari", system-ui, -apple-system, sans-serif;
   font-weight: 600;
@@ -91,17 +91,6 @@ input:focus-visible {
   height: 100%;
   z-index: 0;
   pointer-events: none;
-}
-.scenery--art {
-  background-color: var(--night-900);
-  background-size: cover;
-  background-position: center bottom;
-}
-.scenery__twinkle {
-  animation: twinkle 3.2s ease-in-out infinite;
-}
-.scenery__aurora {
-  animation: aurora 9s ease-in-out infinite alternate;
 }
 .app {
   position: relative;
@@ -460,7 +449,7 @@ input:focus-visible {
   height: 14px;
   border: 1px solid var(--edge);
   border-radius: 99px;
-  background: #120838;
+  background: rgba(255, 255, 255, 0.06);
   overflow: hidden;
 }
 .bar__fill {
@@ -791,7 +780,7 @@ input:focus-visible {
   height: 18px;
   border: 1px solid var(--edge);
   border-radius: 99px;
-  background: #120838;
+  background: rgba(255, 255, 255, 0.06);
 }
 .score__fill {
   height: 100%;
@@ -1052,7 +1041,7 @@ input:focus-visible {
   height: 10px;
   border: 1px solid var(--edge);
   border-radius: 99px;
-  background: #120838;
+  background: rgba(255, 255, 255, 0.06);
   overflow: hidden;
 }
 .mission__bar i {
@@ -1143,7 +1132,7 @@ input:focus-visible {
   min-height: 46px;
   border-radius: 12px;
   border: 1px solid var(--edge);
-  background: #120838;
+  background: rgba(255, 255, 255, 0.06);
   color: var(--ink);
   padding: 0 12px;
   font: 13px/1 ui-monospace, Menlo, monospace;
@@ -1351,4 +1340,336 @@ input:focus-visible {
   .result__streak {
     animation: none;
   }
+}
+
+/* =====================================================================
+   Prism Noir: ink black, lit by soft spectral light. Flat surfaces with
+   hairline edges, editorial left-aligned type in Sora, one bright
+   primary action per screen. This layer sits last and wins.
+   ===================================================================== */
+:root {
+  --ink-bg: #0b0a14;
+  --surface: rgba(255, 255, 255, 0.045);
+  --surface-2: rgba(255, 255, 255, 0.08);
+  --line: rgba(255, 255, 255, 0.09);
+  --line-2: rgba(255, 255, 255, 0.16);
+  --spectrum: linear-gradient(100deg, #ff5f8f 0%, #ffb547 28%, #5ef0a8 52%, #4fc3ff 74%, #a879ff 100%);
+  --primary-ink: #0b0a14;
+  --r-panel: 22px;
+  --r-btn: 14px;
+  font-weight: 500;
+}
+body {
+  background: var(--ink-bg);
+}
+.scenery {
+  --accent: #a879ff;
+  --deep: #1c0b3d;
+  background:
+    radial-gradient(60% 40% at 85% 0%, color-mix(in srgb, var(--accent) 34%, transparent), transparent 70%),
+    radial-gradient(70% 45% at 0% 100%, color-mix(in srgb, var(--deep) 90%, transparent), transparent 75%),
+    radial-gradient(50% 30% at 15% 35%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 70%),
+    var(--ink-bg);
+}
+.scenery::after {
+  /* thin spectral horizon */
+  content: "";
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  bottom: -2px;
+  height: 3px;
+  background: var(--spectrum);
+  opacity: 0.55;
+  filter: blur(1px);
+}
+
+/* type */
+.display,
+.btn,
+.logo,
+.ribbon h2,
+.hud__num,
+.goal__count,
+.pill__value,
+.node,
+.score__num {
+  font-family: var(--display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-shadow: none;
+}
+
+/* surfaces */
+.panel,
+.sheet {
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.025)), #121020;
+  box-shadow: 0 20px 50px -24px rgba(0, 0, 0, 0.8);
+}
+.modal {
+  background: rgba(6, 5, 12, 0.78);
+}
+.ribbon {
+  position: static;
+  transform: none;
+  min-width: 0;
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+.ribbon h2 {
+  font-size: 28px;
+  text-align: left;
+}
+.ribbon::before {
+  content: "";
+  display: block;
+  width: 36px;
+  height: 4px;
+  margin-bottom: 12px;
+  border-radius: 4px;
+  background: var(--spectrum);
+}
+.sheet {
+  padding: 26px 22px 22px;
+  text-align: left;
+}
+
+/* buttons: one bright primary, everything else quiet */
+.btn {
+  border: 1px solid transparent;
+  border-radius: var(--r-btn);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--primary-ink);
+  background: #f5f3ff;
+  box-shadow: 0 10px 30px -12px rgba(200, 180, 255, 0.55);
+}
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
+  box-shadow: none;
+  filter: none;
+  background: #dcd8ee;
+}
+.btn--blue,
+.btn--gold,
+.btn--ghost {
+  color: var(--ink);
+  background: var(--surface-2);
+  border-color: var(--line-2);
+  box-shadow: none;
+}
+.btn--blue:active:not(:disabled),
+.btn--gold:active:not(:disabled),
+.btn--ghost:active:not(:disabled) {
+  background: rgba(255, 255, 255, 0.14);
+}
+.btn--gold .icon {
+  color: #ffb547;
+}
+.btn--blue .icon {
+  color: #4fc3ff;
+}
+.btn--danger {
+  color: #fff;
+  background: #e2336b;
+  box-shadow: none;
+}
+.btn--play {
+  min-height: 76px;
+  font-size: 26px;
+  border-radius: 20px;
+  align-items: flex-start;
+  padding: 12px 24px;
+  animation: none;
+  position: relative;
+  overflow: hidden;
+}
+.btn--play::after {
+  content: "→";
+  position: absolute;
+  right: 22px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 30px;
+}
+.btn--play small {
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.6;
+  letter-spacing: 0;
+}
+.round {
+  border-radius: 14px;
+}
+
+/* home: editorial, left-aligned */
+.home__brand {
+  align-items: flex-start;
+  margin-top: 18px;
+}
+.logo {
+  font-size: clamp(46px, 14vw, 68px);
+  letter-spacing: -0.045em;
+  line-height: 0.92;
+}
+.logo span {
+  display: block;
+  color: transparent;
+  background: var(--spectrum);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+.home__tag {
+  margin-top: 12px;
+  max-width: 26ch;
+  font-size: 15px;
+  line-height: 1.45;
+}
+.hero-gems {
+  justify-content: flex-start;
+  gap: 6px;
+  min-height: 96px;
+}
+.hero-gems span {
+  filter: none;
+  animation-duration: 5s;
+}
+.hero-gems span:nth-child(2),
+.hero-gems span:nth-child(4) {
+  margin-top: 0;
+}
+.world-card__name,
+.rank-card__name {
+  font-size: 18px;
+}
+.world-card__sub,
+.rank-card__sub {
+  font-size: 13px;
+}
+.bar {
+  height: 6px;
+  border: 0;
+  background: rgba(255, 255, 255, 0.08);
+}
+.bar__fill {
+  background: var(--spectrum);
+  background-size: 300px 100%;
+}
+.tile-btn {
+  text-align: left;
+}
+
+/* top bar and tabs */
+.pill {
+  height: 34px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: none;
+}
+.pill__value {
+  font-size: 15px;
+}
+.tabs {
+  border: 1px solid var(--line);
+  background: rgba(18, 16, 32, 0.92);
+}
+.tab {
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+}
+.tab--on {
+  color: var(--primary-ink);
+  background: #f5f3ff;
+  box-shadow: none;
+  transform: none;
+}
+
+/* map */
+.node {
+  border: 1px solid var(--line-2);
+  color: var(--ink);
+  background: #1a1729;
+  box-shadow: none;
+  font-size: 22px;
+}
+.node--locked {
+  background: transparent;
+  border-style: dashed;
+  color: rgba(255, 255, 255, 0.35);
+  box-shadow: none;
+}
+.node--current {
+  color: var(--primary-ink);
+  background: #f5f3ff;
+  border: 0;
+  box-shadow:
+    0 0 0 6px rgba(255, 255, 255, 0.08),
+    0 0 40px color-mix(in srgb, var(--accent) 60%, transparent);
+}
+.star {
+  color: rgba(255, 255, 255, 0.18);
+}
+.star--on {
+  color: #ffc547;
+}
+
+/* game */
+.hud {
+  border-radius: 20px;
+}
+.hud__label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+.board {
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: #0f0d1a;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.6),
+    0 30px 60px -30px rgba(0, 0, 0, 0.9),
+    0 0 80px -20px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.board--hammer {
+  box-shadow: 0 0 0 2px #ffc547, 0 0 40px rgba(255, 197, 71, 0.4);
+}
+.toast {
+  background: #f5f3ff;
+  color: var(--primary-ink);
+  border: 0;
+  font-weight: 700;
+}
+.booster {
+  border: 1px solid var(--line-2) !important;
+  background: var(--surface-2) !important;
+  box-shadow: none !important;
+}
+.booster.on {
+  background: #f5f3ff !important;
+  color: var(--primary-ink);
+}
+.booster {
+  border-radius: 20px;
+  color: #ffc547;
+}
+.hud__moves {
+  border: 1px solid var(--line-2);
+  background: var(--surface-2);
+  box-shadow: none;
+}
+.score__track {
+  height: 8px;
+  border: 0;
+  background: rgba(255, 255, 255, 0.08);
+}
+.score__fill {
+  background: var(--spectrum);
+  background-size: 320px 100%;
 }

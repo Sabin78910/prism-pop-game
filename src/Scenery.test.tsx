@@ -1,24 +1,17 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { Scenery, WORLD_ART } from "./Scenery";
-import { WORLD_IDS } from "./game/worlds";
+import { Scenery } from "./Scenery";
+import { WORLD_IDS, WORLD_THEME } from "./game/worlds";
 
 describe("Scenery", () => {
-  it("paints the Canva backdrop for worlds that have one", () => {
-    const { container } = render(<Scenery world="caves" />);
-    const el = container.querySelector(".scenery--art") as HTMLElement;
-    expect(el).not.toBeNull();
-    expect(el.style.backgroundImage).toContain(WORLD_ART.caves);
-    expect(el.getAttribute("aria-hidden")).toBe("true");
-  });
-
-  it("falls back to the drawn sky for worlds without art", () => {
-    const { container } = render(<Scenery world="forge" />);
-    expect(container.querySelector("svg.scenery")).not.toBeNull();
-    expect(container.querySelector(".scenery--art")).toBeNull();
-  });
-
-  it("only maps real worlds", () => {
-    for (const id of Object.keys(WORLD_ART)) expect(WORLD_IDS).toContain(id);
+  it("lights every world with its own accent, without images", () => {
+    for (const world of WORLD_IDS) {
+      const { container, unmount } = render(<Scenery world={world} />);
+      const el = container.querySelector(".scenery") as HTMLElement;
+      expect(el.getAttribute("aria-hidden")).toBe("true");
+      expect(el.style.getPropertyValue("--accent")).toBe(WORLD_THEME[world].accent);
+      expect(container.querySelector("img, svg")).toBeNull();
+      unmount();
+    }
   });
 });

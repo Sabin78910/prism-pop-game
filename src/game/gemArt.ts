@@ -70,36 +70,55 @@ export function drawGem(ctx: CanvasRenderingContext2D, color: number, special: S
   }
   const [base, light, dark] = GEM_COLORS[color % GEM_COLORS.length];
   ctx.save();
-  // soft drop shadow
-  ctx.shadowColor = "rgba(0,0,0,0.35)";
-  ctx.shadowBlur = r * 0.35;
-  ctx.shadowOffsetY = r * 0.12;
+  // Faceted jewel: a soft coloured glow, a diagonal body gradient, a bright table and a crisp light rim.
+  ctx.shadowColor = base + "88";
+  ctx.shadowBlur = r * 0.45;
+  ctx.shadowOffsetY = r * 0.08;
   shapePath(ctx, color, r);
-  const grad = ctx.createRadialGradient(-r * 0.35, -r * 0.45, r * 0.1, 0, 0, r * 1.2);
+  const grad = ctx.createLinearGradient(-r, -r, r, r);
   grad.addColorStop(0, light);
-  grad.addColorStop(0.45, base);
+  grad.addColorStop(0.4, base);
   grad.addColorStop(1, dark);
   ctx.fillStyle = grad;
   ctx.fill();
   ctx.shadowColor = "transparent";
-  ctx.lineWidth = Math.max(1, r * 0.07);
-  ctx.strokeStyle = dark;
-  ctx.stroke();
-  // inner facet
+  // Facets: the upper-left half catches the light, the lower-right falls into shade.
   ctx.save();
-  ctx.scale(0.55, 0.55);
+  shapePath(ctx, color, r);
+  ctx.clip();
+  ctx.beginPath();
+  ctx.moveTo(-r * 1.2, r * 1.2);
+  ctx.lineTo(r * 1.2, -r * 1.2);
+  ctx.lineTo(-r * 1.2, -r * 1.2);
+  ctx.closePath();
+  ctx.fillStyle = "rgba(255,255,255,0.14)";
+  ctx.fill();
+  ctx.restore();
+  // Table: the flat top face of the cut.
+  ctx.save();
+  ctx.scale(0.56, 0.56);
   shapePath(ctx, color, r);
   ctx.restore();
-  ctx.fillStyle = "rgba(255,255,255,0.16)";
+  const table = ctx.createLinearGradient(0, -r * 0.6, 0, r * 0.6);
+  table.addColorStop(0, "rgba(255,255,255,0.55)");
+  table.addColorStop(1, "rgba(255,255,255,0.08)");
+  ctx.fillStyle = table;
   ctx.fill();
-  // gloss
+  shapePath(ctx, color, r);
+  ctx.lineWidth = Math.max(1, r * 0.06);
+  ctx.strokeStyle = "rgba(255,255,255,0.45)";
+  ctx.stroke();
+  // Four-point sparkle.
+  const sx = -r * 0.3;
+  const sy = -r * 0.34;
+  const k = r * 0.2;
   ctx.beginPath();
-  ctx.ellipse(-r * 0.25, -r * 0.42, r * 0.38, r * 0.17, -0.5, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(255,255,255,0.55)";
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(r * 0.38, r * 0.3, r * 0.07, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(255,255,255,0.7)";
+  ctx.moveTo(sx, sy - k);
+  ctx.quadraticCurveTo(sx, sy, sx + k * 0.6, sy);
+  ctx.quadraticCurveTo(sx, sy, sx, sy + k * 0.6);
+  ctx.quadraticCurveTo(sx, sy, sx - k * 0.6, sy);
+  ctx.quadraticCurveTo(sx, sy, sx, sy - k);
+  ctx.fillStyle = "rgba(255,255,255,0.95)";
   ctx.fill();
 
   if (special === "lineH" || special === "lineV") {
