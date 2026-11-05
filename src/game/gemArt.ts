@@ -62,7 +62,55 @@ function shapePath(ctx: CanvasRenderingContext2D, color: number, r: number): voi
   }
 }
 
-/** Draws one gem centred at (0,0) with radius r. */
+/** Outline points used to cut facets; the circle uses a 12-gon under a round clip. */
+function facetPoints(color: number, r: number): [number, number][] {
+  const ring = (n: number, rad: number, rot: number) =>
+    Array.from({ length: n }, (_, i): [number, number] => [Math.cos(rot + (i * 2 * Math.PI) / n) * rad, Math.sin(rot + (i * 2 * Math.PI) / n) * rad]);
+  switch (color) {
+    case 0: {
+      const s = r * 0.86;
+      const c = r * 0.3;
+      return [[-s + c, -s], [s - c, -s], [s, -s + c], [s, s - c], [s - c, s], [-s + c, s], [-s, s - c], [-s, -s + c]];
+    }
+    case 1:
+      return ring(12, r * 0.92, -Math.PI / 2);
+    case 2:
+      return ring(4, r * 1.02, -Math.PI / 2);
+    case 3:
+      return ring(6, r * 0.96, 0);
+    case 4:
+      return [[0, -r * 0.98], [r * 0.98, r * 0.78], [-r * 0.98, r * 0.78]];
+    default:
+      return Array.from({ length: 10 }, (_, i): [number, number] => {
+        const a = -Math.PI / 2 + (i * Math.PI) / 5;
+        const rad = i % 2 === 0 ? r : r * 0.5;
+        return [Math.cos(a) * rad, Math.sin(a) * rad];
+      });
+  }
+}
+
+function pathOf(ctx: CanvasRenderingContext2D, pts: [number, number][]): void {
+  ctx.beginPath();
+  pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+  ctx.closePath();
+}
+
+/** Four-point sparkle. */
+function sparkle(ctx: CanvasRenderingContext2D, x: number, y: number, s: number): void {
+  ctx.beginPath();
+  ctx.moveTo(x, y - s);
+  ctx.quadraticCurveTo(x, y, x + s, y);
+  ctx.quadraticCurveTo(x, y, x, y + s);
+  ctx.quadraticCurveTo(x, y, x - s, y);
+  ctx.quadraticCurveTo(x, y, x, y - s);
+  ctx.fill();
+}
+
+/**
+ * Draws one gem centred at (0,0) with radius r: a cut jewel with light facets towards the top left, dark
+ * facets away from it, a bright table, a candy-gloss highlight and a sparkle. Silhouettes never change, so
+ * each colour keeps its own shape for colour-blind players.
+ */
 export function drawGem(ctx: CanvasRenderingContext2D, color: number, special: Special, r: number): void {
   if (special === "prism") {
     drawPrism(ctx, r);
@@ -70,36 +118,71 @@ export function drawGem(ctx: CanvasRenderingContext2D, color: number, special: S
   }
   const [base, light, dark] = GEM_COLORS[color % GEM_COLORS.length];
   ctx.save();
-  // soft drop shadow
-  ctx.shadowColor = "rgba(0,0,0,0.35)";
-  ctx.shadowBlur = r * 0.35;
-  ctx.shadowOffsetY = r * 0.12;
+  // body with a soft drop shadow
+  ctx.shadowColor = "rgba(0,0,0,0.45)";
+  ctx.shadowBlur = r * 0.3;
+  ctx.shadowOffsetY = r * 0.14;
   shapePath(ctx, color, r);
-  const grad = ctx.createRadialGradient(-r * 0.35, -r * 0.45, r * 0.1, 0, 0, r * 1.2);
-  grad.addColorStop(0, light);
-  grad.addColorStop(0.45, base);
-  grad.addColorStop(1, dark);
-  ctx.fillStyle = grad;
+  const body = ctx.createLinearGradient(-r * 0.6, -r, r * 0.6, r);
+  body.addColorStop(0, light);
+  body.addColorStop(0.35, base);
+  body.addColorStop(1, dark);
+  ctx.fillStyle = body;
   ctx.fill();
   ctx.shadowColor = "transparent";
-  ctx.lineWidth = Math.max(1, r * 0.07);
+
+  ctx.save();
+  shapePath(ctx, color, r);
+  ctx.clip();
+  // facets: each outer edge to the matching edge of the inner table, lit by its angle to the light
+  const outer = facetPoints(color, r);
+  const inner = outer.map(([x, y]): [number, number] => [x * 0.52, y * 0.52 - r * 0.05]);
+  const lx = -0.6, ly = -0.8;
+  for (let i = 0; i < outer.length; i++) {
+    const j = (i + 1) % outer.length;
+    const mx = (outer[i][0] + outer[j][0]) / 2, my = (outer[i][1] + outer[j][1]) / 2;
+    const len = Math.hypot(mx, my) || 1;
+    const facing = (mx / len) * lx + (my / len) * ly;
+    pathOf(ctx, [outer[i], outer[j], inner[j], inner[i]]);
+    ctx.fillStyle = facing > 0 ? `rgba(255,255,255,${0.08 + facing * 0.32})` : `rgba(0,0,0,${-facing * 0.28})`;
+    ctx.fill();
+  }
+  // table
+  pathOf(ctx, inner);
+  const table = ctx.createRadialGradient(-r * 0.15, -r * 0.25, 0, 0, 0, r * 0.6);
+  table.addColorStop(0, "rgba(255,255,255,0.75)");
+  table.addColorStop(0.5, light);
+  table.addColorStop(1, base);
+  ctx.globalAlpha = 0.85;
+  ctx.fillStyle = table;
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  // reflected light along the bottom
+  ctx.beginPath();
+  ctx.ellipse(0, r * 0.85, r * 0.75, r * 0.28, 0, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(255,255,255,0.14)";
+  ctx.fill();
+  // candy gloss across the top
+  const gloss = ctx.createLinearGradient(0, -r, 0, -r * 0.15);
+  gloss.addColorStop(0, "rgba(255,255,255,0.7)");
+  gloss.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.beginPath();
+  ctx.ellipse(-r * 0.12, -r * 0.55, r * 0.62, r * 0.36, -0.25, 0, Math.PI * 2);
+  ctx.fillStyle = gloss;
+  ctx.fill();
+  ctx.restore();
+
+  // crisp rim
+  shapePath(ctx, color, r);
+  ctx.lineWidth = Math.max(1, r * 0.06);
   ctx.strokeStyle = dark;
   ctx.stroke();
-  // inner facet
-  ctx.save();
-  ctx.scale(0.55, 0.55);
-  shapePath(ctx, color, r);
-  ctx.restore();
-  ctx.fillStyle = "rgba(255,255,255,0.16)";
-  ctx.fill();
-  // gloss
+  // sparkle
+  ctx.fillStyle = "rgba(255,255,255,0.95)";
+  sparkle(ctx, -r * 0.36, -r * 0.36, r * 0.16);
   ctx.beginPath();
-  ctx.ellipse(-r * 0.25, -r * 0.42, r * 0.38, r * 0.17, -0.5, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(255,255,255,0.55)";
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(r * 0.38, r * 0.3, r * 0.07, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(255,255,255,0.7)";
+  ctx.arc(r * 0.34, r * 0.26, r * 0.05, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(255,255,255,0.75)";
   ctx.fill();
 
   if (special === "lineH" || special === "lineV") {
