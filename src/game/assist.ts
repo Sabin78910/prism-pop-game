@@ -1,7 +1,9 @@
 import type { Level } from "./types";
 
 /**
- * Fair assist: after repeated losses on the same level, the next try starts with a few extra moves.
+ * Fair assist, adapted to each player: every loss on a level gives the next try a few more moves, and after a
+ * long run of losses the board also deals one colour fewer so matches come easier. It looks only at how the
+ * player plays on this device, never at spending, and it only ever helps.
  * It only ever helps, it is shown on screen, the player can switch it off, and the daily challenge never
  * gets it (so everyone plays the same daily board). Losses are counted on this device only.
  */
@@ -9,14 +11,20 @@ export type AssistLog = Record<number, number>;
 
 /** Extra starting moves after this many losses in a row on one level. */
 export function assistMoves(losses: number): number {
-  if (losses >= 4) return 5;
-  if (losses >= 2) return 3;
-  return 0;
+  return Math.min(6, Math.max(0, losses) * 2);
 }
 
-export function withAssist(level: Level, log: AssistLog, enabled: boolean): { level: Level; extra: number } {
-  const extra = enabled && level.number > 0 ? assistMoves(log[level.number] ?? 0) : 0;
-  return { level: extra ? { ...level, moves: level.moves + extra } : level, extra };
+/** After this many losses in a row on one level, the board deals one colour fewer. */
+export const CALM_AFTER = 4;
+
+export function withAssist(level: Level, log: AssistLog, enabled: boolean): { level: Level; extra: number; calm: boolean } {
+  const losses = enabled && level.number > 0 ? (log[level.number] ?? 0) : 0;
+  const extra = assistMoves(losses);
+  // One colour fewer, but never below four and never the colour the goal asks for.
+  const goalColor = level.objective.kind === "collect" ? level.objective.color : -1;
+  const calm = losses >= CALM_AFTER && level.colors > 4 && goalColor < level.colors - 1;
+  if (!extra && !calm) return { level, extra, calm };
+  return { level: { ...level, moves: level.moves + extra, colors: calm ? level.colors - 1 : level.colors }, extra, calm };
 }
 
 /** A loss adds to the level's count; a win clears it. The daily challenge is never counted. */
