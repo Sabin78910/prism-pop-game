@@ -13,6 +13,24 @@
 Prism Pop should look like a game from a top studio, not a web page. This file is the source of truth for
 how every screen looks and moves. `docs/DESIGN-AUDIT.md` scores the app against it.
 
+
+## Prism Noir (current direction, November 2026)
+
+This replaces the chunky cartoon style. Where a later section disagrees, this one wins.
+
+- **Stage:** ink `#0B0A14` lit by two soft pools of the world's accent colour and a thin spectral horizon,
+  all CSS gradients. No painted backdrops, nothing animated behind the board.
+- **Type:** Sora 600/700 for display (tight tracking, no stroke, no drop shadow), Inter for body. Editorial,
+  left-aligned headings; the logo's "Pop" carries the spectrum gradient.
+- **Surfaces:** flat panels at 4 to 8% white over ink with a 1px hairline edge and one deep soft shadow.
+- **Actions:** one bright primary per screen (near-white `#F5F3FF` with ink text). Secondary actions are quiet
+  glass with a coloured icon. Danger is solid pink.
+- **Spectrum:** `--spectrum` (pink, amber, mint, sky, violet) marks progress: bars, score track, header accents.
+- **Gems:** faceted jewels with a diagonal body gradient, a bright table, a light rim, a sparkle and a glow in
+  their own colour. Every colour keeps its own shape.
+- **Juice:** each popped gem sends out a ring in its colour plus shards; the pop sound has a click transient
+  and gains a harmony from the third combo on. Haptics stay on impact only.
+
 ## What the category leaders do
 
 The research covers the top-grossing match-3 games of 2025 and 2026: Royal Match, Royal Kingdom, Candy Crush
@@ -21,11 +39,12 @@ on store pages, published UX breakdowns and market reports (see Sources). Their 
 
 1. **Full-screen scenes, not pages.** The home screen is a lit scene, with a currency bar at the top, one
    huge Play button and a bottom tab bar. Nothing scrolls except the level map.
-2. **Chunky, tactile controls.** Buttons have a solid gradient fill, a dark outline, a bevel underneath and
-   a light edge on top. A pressed button sinks into its bevel. Panels are solid and outlined, not frosted
-   glass.
-3. **Display type with an outline.** Headings and numbers use a rounded display face with a dark stroke and
-   a drop shadow, so they read over any background. Body text is short. The UI is lean, with few text boxes.
+2. **Tactile, modern controls.** Buttons have a gradient fill, a hairline light edge and a soft glow in their
+   own colour. A pressed button squashes slightly. Panels are deep, slightly translucent, with a 1px edge and
+   soft elevation. No thick dark outlines or hard bevels: that look reads as dated (changed November 2026).
+3. **Clean display type.** Headings and numbers use the rounded display face with a soft shadow, no stroke.
+   Text on buttons keeps AA contrast on its own (gold buttons use dark text). The UI is lean, with few text
+   boxes.
 4. **Goals as icons.** The level HUD shows each goal as an icon with a remaining count, which ticks to a
    check mark when done. Moves sit in one large badge. Goals are also shown before play starts.
 5. **High-contrast primary colours** on a darker, calmer stage, so the board is the brightest thing on screen.

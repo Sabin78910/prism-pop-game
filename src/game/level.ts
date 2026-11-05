@@ -4,6 +4,8 @@ import { planFor } from "./worlds";
 
 const ROWS = 9;
 const COLS = 8;
+/** Spare moves added to every level so each one is easy to finish. */
+export const EASY_CUSHION = 6;
 
 /** Symmetric jelly patterns, as row strings for the 9x8 board ('1'/'2' = layers). */
 const PATTERNS: string[][] = [
@@ -76,6 +78,8 @@ export function makeLevel(n: number, seed = hashString(`prism-pop-level-${n}`)):
   // shrink slowly, never below 15.
   moves += { intro: 4, develop: 0, combine: -1, boss: -2 }[stage];
   moves = Math.max(15, moves - Math.max(0, Math.floor((n - 75) / 15)));
+  // Relaxed by design: every level keeps a cushion of spare moves so a careful player clears it.
+  moves += EASY_CUSHION + (colors >= 6 ? 4 : 0);
   const base = objective.kind === "score" ? objective.target : 1500 + n * 300;
   return {
     number: n,

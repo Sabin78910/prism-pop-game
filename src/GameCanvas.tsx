@@ -1,11 +1,15 @@
 import { useEffect, useRef } from "react";
 import { findHint, isAdjacent } from "./game/board";
+import { hintDelay, learnPace, loadPace, savePace } from "./game/pace";
+
+const paceStore = typeof localStorage !== "undefined" ? localStorage : undefined;
 import { GEM_COLORS, gemSprite } from "./game/gemArt";
 import { comboWord, hapticPattern, scorePopup } from "./game/feedback";
 import { effectProgress, hitStopMs, stepEffects, type Effect } from "./game/effects";
 import type { Grid, Pos, Step } from "./game/types";
 import type { TurnResult } from "./game/session";
 import { sfx } from "./audio";
+import { canvasScale, shouldDraw } from "./game/frameGate";
 
 interface Props {
   grid: Grid;
@@ -50,6 +54,28 @@ interface FloatText {
   score?: boolean;
 }
 
+/** Paints the checkered tiles and jelly into the cached board layer. */
+function paintBoard(ctx: CanvasRenderingContext2D, tiles: Props["tiles"], jelly: Props["jelly"], rows: number, cols: number, cell: number, ox: number, oy: number) {
+  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const x = ox + c * cell;
+      const y = oy + r * cell;
+      ctx.fillStyle = tiles[(r + c) % 2];
+      ctx.beginPath();
+      ctx.roundRect(x + 1.5, y + 1.5, cell - 3, cell - 3, cell * 0.18);
+      ctx.fill();
+      const j = jelly[r]?.[c] ?? 0;
+      if (j > 0) {
+        ctx.fillStyle = j > 1 ? "rgba(255,92,170,0.55)" : "rgba(255,140,200,0.32)";
+        ctx.beginPath();
+        ctx.roundRect(x + 3, y + 3, cell - 6, cell - 6, cell * 0.2);
+        ctx.fill();
+      }
+    }
+  }
+}
+
 const buzz = (pattern: number[]) => {
   if (pattern.length && "vibrate" in navigator) navigator.vibrate(pattern);
 };
@@ -64,6 +90,8 @@ export function GameCanvas(props: Props) {
     grid: props.grid,
     sprites: new Map<number, Sprite>(),
     particles: [] as Particle[],
+    /** Expanding colour rings, one per popped gem: the satisfying "pop" read at a glance. */
+    rings: [] as { x: number; y: number; color: string; t: number }[],
     texts: [] as FloatText[],
     fx: [] as { e: Effect; age: number }[],
     busy: false,
@@ -71,9 +99,14 @@ export function GameCanvas(props: Props) {
     drag: null as { pos: Pos; x: number; y: number } | null,
     shake: 0,
     lastInput: performance.now(),
+    /** When the previous move started; think time is measured from here. */
+    turnAt: performance.now(),
+    pace: loadPace(paceStore),
     hint: null as [Pos, Pos] | null,
     swapAnim: null as null | { a: Pos; b: Pos; t: number; back: boolean },
     cell: 40,
+    /** Bumped whenever something drawn changes outside the animation loop. */
+    version: 0,
   });
 
   // Adopt a new grid from outside (new level, shuffle) when not animating.
@@ -83,6 +116,7 @@ export function GameCanvas(props: Props) {
       s.grid = props.grid;
       s.hint = null;
     }
+    s.version++;
   }, [props.grid]);
 
   useEffect(() => {
@@ -94,26 +128,63 @@ export function GameCanvas(props: Props) {
 
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
-      const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+      const dpr = canvasScale(window.devicePixelRatio, navigator.hardwareConcurrency);
       canvas.width = Math.round(rect.width * dpr);
       canvas.height = Math.round(rect.height * dpr);
       const rows = s.grid.length;
       const cols = s.grid[0].length;
       s.cell = Math.floor(Math.min(canvas.width / cols, canvas.height / rows));
+      boardKey = "";
+      s.version++;
     };
+    // Tiles and jelly only change between moves, so they are painted once into a layer and blitted.
+    const board = document.createElement("canvas");
+    const bctx = board.getContext("2d")!;
+    let boardKey = "";
+    let boardTiles: unknown = null;
+    let boardJelly = -1;
+    let drawnVersion = -1;
+    let drawnKey = "";
+    let lastDraw = 0;
+    let moving = true;
+    let pulsing = false;
     resize();
     const ro = new ResizeObserver(resize);
     ro.observe(canvas);
 
     const frame = (now: number) => {
+      raf = requestAnimationFrame(frame);
+      const p = propsRef.current;
+      const hintOn = !s.busy && now - s.lastInput > hintDelay(s.pace);
+      const key = `${s.selected?.r},${s.selected?.c}|${s.busy}|${hintOn}|${p.reducedMotion}`;
+      const animating = moving || !!s.swapAnim || s.fx.length > 0 || s.particles.length > 0 || s.rings.length > 0 || s.texts.length > 0 || s.shake > 0;
+      // Jelly is cleared in place, so its layer is keyed on what is left rather than on the array.
+      let jellyLeft = 0;
+      for (const row of p.jelly) for (const j of row) jellyLeft += j;
+      const changed = jellyLeft !== boardJelly || key !== drawnKey || s.version !== drawnVersion || p.tiles !== boardTiles;
+      if (!shouldDraw({ animating, pulsing: pulsing || (hintOn && !!s.hint), changed, sinceDraw: now - lastDraw })) {
+        last = now;
+        return;
+      }
+      drawnKey = key;
+      drawnVersion = s.version;
+      lastDraw = now;
       const dt = Math.min(48, now - last);
       last = now;
-      const p = propsRef.current;
       const cell = s.cell;
       const rows = s.grid.length;
       const cols = s.grid[0].length;
       const ox = (canvas.width - cell * cols) / 2;
       const oy = (canvas.height - cell * rows) / 2;
+      const bk = `${canvas.width}x${canvas.height}|${cell}`;
+      if (bk !== boardKey || p.tiles !== boardTiles || jellyLeft !== boardJelly) {
+        boardKey = bk;
+        boardTiles = p.tiles;
+        boardJelly = jellyLeft;
+        board.width = canvas.width;
+        board.height = canvas.height;
+        paintBoard(bctx, p.tiles, p.jelly, rows, cols, cell, ox, oy);
+      }
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       if (s.shake > 0 && !p.reducedMotion) {
@@ -121,24 +192,7 @@ export function GameCanvas(props: Props) {
       }
       s.shake = Math.max(0, s.shake - dt / 250);
 
-      // board tiles + jelly
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const x = ox + c * cell;
-          const y = oy + r * cell;
-          ctx.fillStyle = p.tiles[(r + c) % 2];
-          ctx.beginPath();
-          ctx.roundRect(x + 1.5, y + 1.5, cell - 3, cell - 3, cell * 0.18);
-          ctx.fill();
-          const j = p.jelly[r]?.[c] ?? 0;
-          if (j > 0) {
-            ctx.fillStyle = j > 1 ? "rgba(255,92,170,0.55)" : "rgba(255,140,200,0.32)";
-            ctx.beginPath();
-            ctx.roundRect(x + 3, y + 3, cell - 6, cell - 6, cell * 0.2);
-            ctx.fill();
-          }
-        }
-      }
+      ctx.drawImage(board, 0, 0);
 
       // selection + hint glow
       const glow = (q: Pos, alpha: number) => {
@@ -148,7 +202,7 @@ export function GameCanvas(props: Props) {
         ctx.fill();
       };
       if (s.selected) glow(s.selected, 0.35);
-      if (!s.busy && now - s.lastInput > 5000) {
+      if (!s.busy && now - s.lastInput > hintDelay(s.pace)) {
         s.hint ??= findHint(s.grid);
         if (s.hint) {
           const a = 0.18 + 0.18 * Math.sin(now / 180);
@@ -160,6 +214,8 @@ export function GameCanvas(props: Props) {
       // gems
       const spriteSize = Math.round(cell);
       const spring = p.reducedMotion ? 1 : Math.min(1, dt / 70);
+      moving = false;
+      pulsing = false;
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
           const gem = s.grid[r][c];
@@ -198,8 +254,12 @@ export function GameCanvas(props: Props) {
           }
           sp.scale += (1 - sp.scale) * Math.min(1, dt / 90);
           let sc = sp.scale;
-          if (gem.special === "prism" || gem.special === "bomb") sc *= 1 + 0.05 * Math.sin(now / 160);
+          if (gem.special === "prism" || gem.special === "bomb") {
+            sc *= 1 + 0.05 * Math.sin(now / 160);
+            pulsing = true;
+          }
           sp.squash = Math.max(0, sp.squash - dt / 140);
+          if (Math.abs(sp.x - tx) > 0.001 || Math.abs(sp.y - ty) > 0.001 || 1 - sp.scale > 0.002 || sp.squash > 0) moving = true;
           const w = spriteSize * sc * (1 + 0.1 * sp.squash);
           const h = spriteSize * sc * (1 - 0.14 * sp.squash);
           const img = gemSprite(gem.color, gem.special, spriteSize);
@@ -275,6 +335,22 @@ export function GameCanvas(props: Props) {
       ctx.globalAlpha = 1;
       s.fx = s.fx.filter((f) => f.age < f.e.duration);
 
+      // pop rings
+      if (!p.reducedMotion) {
+        for (const g of s.rings) {
+          g.t += dt / 260;
+          const k = Math.min(1, g.t);
+          ctx.globalAlpha = (1 - k) * 0.9;
+          ctx.strokeStyle = g.color;
+          ctx.lineWidth = cell * 0.09 * (1 - k) + 1;
+          ctx.beginPath();
+          ctx.arc(ox + g.x * cell, oy + g.y * cell, cell * (0.25 + 0.45 * (1 - (1 - k) * (1 - k))), 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+      }
+      s.rings = p.reducedMotion ? [] : s.rings.filter((g) => g.t < 1);
+
       // particles
       for (const pt of s.particles) {
         pt.x += pt.vx * dt;
@@ -311,8 +387,6 @@ export function GameCanvas(props: Props) {
       }
       ctx.globalAlpha = 1;
       s.texts = s.texts.filter((t) => t.life > 0);
-
-      raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
     return () => {
@@ -340,6 +414,7 @@ export function GameCanvas(props: Props) {
           const v = 0.002 + Math.random() * 0.004;
           s.particles.push({ x: pos.c + 0.5, y: pos.r + 0.5, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 0.002, life: 1, color, size: 0.6 + Math.random() * 0.8 });
         }
+        if (!fast) s.rings.push({ x: pos.c + 0.5, y: pos.r + 0.5, color, t: 0 });
         s.sprites.delete(gem.id);
       }
       for (const { pos } of step.thawed) {
@@ -371,12 +446,15 @@ export function GameCanvas(props: Props) {
         s.texts.push({ text: popup.text, x: cx, y: cy, life: 1, size: popup.scale, score: true });
       }
       s.grid = step.afterClear;
+      s.version++;
       await wait(fast ? 60 : 170);
       for (const sp of step.spawned) s.sprites.set(sp.id, { x: sp.c, y: sp.startRow, vy: 0, scale: 1, squash: 0 });
       s.grid = step.afterFall;
+      s.version++;
       await wait(fast ? 80 : 260);
     }
     s.grid = endGrid;
+    s.version++;
     s.hint = null;
   }
 
@@ -386,6 +464,9 @@ export function GameCanvas(props: Props) {
     s.lastInput = performance.now();
     s.hint = null;
     if (swapPair) {
+      s.pace = learnPace(s.pace, s.lastInput - s.turnAt);
+      s.turnAt = s.lastInput;
+      savePace(paceStore, s.pace);
       s.swapAnim = { a: swapPair[0], b: swapPair[1], t: 0, back: false };
       sfx.swap();
     }
@@ -402,6 +483,7 @@ export function GameCanvas(props: Props) {
     }
     if (res.valid) await animateSteps(res.steps, propsRef.current.getGrid());
     s.grid = propsRef.current.getGrid();
+    s.version++;
     s.busy = false;
     propsRef.current.onSettled(s.grid);
   }
