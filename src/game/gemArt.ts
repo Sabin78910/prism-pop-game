@@ -2,12 +2,12 @@ import type { Special } from "./types";
 
 /** Gem colours (base, light, dark). Each colour also has its own shape, so colour-blind players can tell them apart. */
 export const GEM_COLORS: [string, string, string][] = [
-  ["#FF4D6D", "#FFB3C1", "#A4133C"], // ruby: rounded square
-  ["#FFB703", "#FFE7A3", "#B86E00"], // amber: orb
-  ["#2DD881", "#B5F5D3", "#0B7A45"], // emerald: diamond
-  ["#3A86FF", "#B9D4FF", "#1849A9"], // sapphire: hexagon
-  ["#B15CFF", "#E4C6FF", "#6A1FB0"], // amethyst: triangle
-  ["#00D1FF", "#B3F1FF", "#00799A"], // topaz: star
+  ["#FF2E4D", "#FFB3BF", "#A3001C"], // ruby: heart
+  ["#FFC800", "#FFF1A6", "#C77A00"], // amber: round drop
+  ["#2ED84A", "#C2F7B8", "#0B7A24"], // emerald: diamond
+  ["#1E7BFF", "#B5D6FF", "#0B3FAE"], // sapphire: hexagon
+  ["#B23DFF", "#E7C2FF", "#6510A8"], // amethyst: berry cluster
+  ["#FF7A1A", "#FFD2A8", "#B23F00"], // topaz: teardrop
 ];
 
 export const GEM_NAMES_EN = ["Ruby", "Amber", "Emerald", "Sapphire", "Amethyst", "Topaz"];
@@ -26,16 +26,16 @@ function polygon(ctx: CanvasRenderingContext2D, n: number, r: number, rot: numbe
 }
 
 function shapePath(ctx: CanvasRenderingContext2D, color: number, r: number): void {
+  ctx.beginPath();
   switch (color) {
-    case 0: {
-      const s = r * 0.86;
-      ctx.beginPath();
-      ctx.roundRect(-s, -s, s * 2, s * 2, r * 0.32);
+    case 0: // heart
+      ctx.moveTo(0, r * 0.96);
+      ctx.bezierCurveTo(-r * 1.3, r * 0.1, -r * 0.9, -r * 1.12, 0, -r * 0.52);
+      ctx.bezierCurveTo(r * 0.9, -r * 1.12, r * 1.3, r * 0.1, 0, r * 0.96);
+      ctx.closePath();
       return;
-    }
-    case 1:
-      ctx.beginPath();
-      ctx.arc(0, 0, r * 0.92, 0, Math.PI * 2);
+    case 1: // round drop
+      ctx.arc(0, 0, r * 0.9, 0, Math.PI * 2);
       return;
     case 2:
       polygon(ctx, 4, r * 1.02, -Math.PI / 2);
@@ -43,22 +43,21 @@ function shapePath(ctx: CanvasRenderingContext2D, color: number, r: number): voi
     case 3:
       polygon(ctx, 6, r * 0.96, 0);
       return;
-    case 4:
-      ctx.beginPath();
-      ctx.moveTo(0, -r * 0.98);
-      ctx.lineTo(r * 0.98, r * 0.78);
-      ctx.lineTo(-r * 0.98, r * 0.78);
-      ctx.closePath();
-      return;
-    default: {
-      ctx.beginPath();
-      for (let i = 0; i < 10; i++) {
-        const a = -Math.PI / 2 + (i * Math.PI) / 5;
-        const rad = i % 2 === 0 ? r : r * 0.5;
-        ctx.lineTo(Math.cos(a) * rad, Math.sin(a) * rad);
+    case 4: // berry cluster: six berries round a centre one
+      for (let i = 0; i < 6; i++) {
+        const a = -Math.PI / 2 + (i * Math.PI) / 3;
+        ctx.moveTo(Math.cos(a) * r * 0.52 + r * 0.4, Math.sin(a) * r * 0.52);
+        ctx.arc(Math.cos(a) * r * 0.52, Math.sin(a) * r * 0.52, r * 0.4, 0, Math.PI * 2);
       }
+      ctx.moveTo(r * 0.42, 0);
+      ctx.arc(0, 0, r * 0.42, 0, Math.PI * 2);
+      return;
+    default: // teardrop
+      ctx.moveTo(0, -r);
+      ctx.quadraticCurveTo(r * 0.78, -r * 0.2, r * 0.78, r * 0.2);
+      ctx.arc(0, r * 0.2, r * 0.78, 0, Math.PI);
+      ctx.quadraticCurveTo(-r * 0.78, -r * 0.2, 0, -r);
       ctx.closePath();
-    }
   }
 }
 
@@ -135,7 +134,8 @@ export function drawGem(ctx: CanvasRenderingContext2D, color: number, special: S
   shapePath(ctx, color, r);
   ctx.clip();
   // facets: each outer edge to the matching edge of the inner table, lit by its angle to the light
-  const outer = facetPoints(color, r);
+  const cut = color === 2 || color === 3;
+  const outer = cut ? facetPoints(color, r) : [];
   const inner = outer.map(([x, y]): [number, number] => [x * 0.52, y * 0.52 - r * 0.05]);
   const lx = -0.6, ly = -0.8;
   for (let i = 0; i < outer.length; i++) {
@@ -147,8 +147,12 @@ export function drawGem(ctx: CanvasRenderingContext2D, color: number, special: S
     ctx.fillStyle = facing > 0 ? `rgba(255,255,255,${0.08 + facing * 0.32})` : `rgba(0,0,0,${-facing * 0.28})`;
     ctx.fill();
   }
-  // table
-  pathOf(ctx, inner);
+  // table (cut gems) or a soft inner glow (candies)
+  if (cut) pathOf(ctx, inner);
+  else {
+    ctx.beginPath();
+    ctx.arc(-r * 0.1, -r * 0.12, r * 0.55, 0, Math.PI * 2);
+  }
   const table = ctx.createRadialGradient(-r * 0.15, -r * 0.25, 0, 0, 0, r * 0.6);
   table.addColorStop(0, "rgba(255,255,255,0.75)");
   table.addColorStop(0.5, light);
@@ -172,11 +176,11 @@ export function drawGem(ctx: CanvasRenderingContext2D, color: number, special: S
   ctx.fill();
   ctx.restore();
 
-  // crisp rim
+  // crisp rim (the berry cluster skips it so the inner berries stay clean)
   shapePath(ctx, color, r);
   ctx.lineWidth = Math.max(1, r * 0.06);
   ctx.strokeStyle = dark;
-  ctx.stroke();
+  if (color !== 4) ctx.stroke();
   // sparkle
   ctx.fillStyle = "rgba(255,255,255,0.95)";
   sparkle(ctx, -r * 0.36, -r * 0.36, r * 0.16);

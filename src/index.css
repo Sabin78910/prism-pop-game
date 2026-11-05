@@ -1407,3 +1407,56 @@ input:focus-visible {
 .btn--blue {
   --c: #2f6fe0;
 }
+
+/* ===== Crystal Blue (Nov 2026, from leo's mockup) =====
+   Bright blue crystal cave, glossy blue panels with a light rim, deep navy board cells, round glossy
+   boosters. Overrides the Prism Noir layer above. */
+:root {
+  --night-900: #0a1f5c;
+  --night-800: #12307f;
+  --blue-hi: #4f8dff;
+  --blue-mid: #2a63e6;
+  --blue-lo: #163ea8;
+  --rim: rgba(170, 210, 255, 0.6);
+}
+.scenery--art {
+  filter: hue-rotate(-38deg) saturate(1.2) brightness(1.05);
+}
+.panel {
+  border: 2px solid var(--rim);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--blue-mid) 92%, transparent), color-mix(in srgb, var(--blue-lo) 92%, transparent));
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.35), inset 0 -3px 0 rgba(4, 18, 70, 0.35), 0 14px 30px rgba(4, 14, 60, 0.5);
+}
+.hud__moves {
+  border: 2px solid var(--rim);
+  background: linear-gradient(180deg, var(--blue-hi), var(--blue-lo));
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45), 0 6px 16px rgba(4, 14, 60, 0.5);
+}
+.board {
+  border: 3px solid var(--rim);
+  background: linear-gradient(180deg, rgba(14, 40, 120, 0.92), rgba(8, 26, 86, 0.95));
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.25), 0 0 0 4px rgba(40, 100, 230, 0.55), 0 20px 40px rgba(4, 14, 60, 0.55);
+}
+.booster {
+  border: 2px solid var(--rim);
+  color: #ffd23f;
+  background: radial-gradient(circle at 40% 28%, #6aa2ff, var(--blue-mid) 55%, var(--blue-lo));
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.4), inset 0 -4px 0 rgba(4, 18, 70, 0.4), 0 6px 14px rgba(4, 14, 60, 0.5);
+}
+.booster .icon {
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35));
+}
+.round,
+.btn--ghost {
+  --c: var(--blue-mid);
+  background: linear-gradient(180deg, var(--blue-hi), var(--blue-lo));
+  border: 2px solid var(--rim);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.4), 0 6px 14px rgba(4, 14, 60, 0.45);
+}
+.tab--on {
+  background: linear-gradient(180deg, var(--blue-hi), var(--blue-lo));
+  box-shadow: 0 0 0 2px var(--rim), inset 0 2px 0 rgba(255, 255, 255, 0.35);
+}
+.modal {
+  background: rgba(4, 14, 50, 0.7);
+}

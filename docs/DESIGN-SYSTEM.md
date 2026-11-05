@@ -1,5 +1,9 @@
 # Prism Pop design system
 
+> **Crystal Blue (November 2026, latest).** Built from leo's mockup: bright blue cave scene, glossy blue
+> panels with a light rim, navy board cells, and candy pieces (red heart, yellow drop, green diamond, blue
+> hexagon, purple berry cluster, orange teardrop). Override layer at the end of `src/index.css`.
+>
 > **Prism Noir (November 2026).** The chunky outlined style below is superseded on the surface layer: ink
 > stage `#0B0A14`, hairline glass panels (1px white at 10%, 18px blur), one spectral gradient
 > (`#8B5CFF → #5B7CFF → #19C8FF`) for the main action, Sora 600/800 display type with no text outline, and
