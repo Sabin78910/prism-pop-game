@@ -543,7 +543,7 @@ export default function App() {
               <span className="rank-card__sub">
                 {rank.toNext > 0 ? t(lang, "rankToNext", { n: num(lang, rank.toNext) }) : t(lang, "rankTop")}
               </span>
-              <div className="bar" aria-label={`${t(lang, "rank")}: ${rankName(rank)}`}>
+              <div className="bar" role="img" aria-label={`${t(lang, "rank")}: ${rankName(rank)}`}>
                 <div className="bar__fill" style={{ width: `${rank.fill * 100}%` }} />
               </div>
             </div>
