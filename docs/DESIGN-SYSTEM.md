@@ -3,6 +3,24 @@
 Prism Pop should look like a game from a top studio, not a web page. This file is the source of truth for
 how every screen looks and moves. `docs/DESIGN-AUDIT.md` scores the app against it.
 
+
+## Prism Noir (current direction, November 2026)
+
+This replaces the chunky cartoon style. Where a later section disagrees, this one wins.
+
+- **Stage:** ink `#0B0A14` lit by two soft pools of the world's accent colour and a thin spectral horizon,
+  all CSS gradients. No painted backdrops, nothing animated behind the board.
+- **Type:** Sora 600/700 for display (tight tracking, no stroke, no drop shadow), Inter for body. Editorial,
+  left-aligned headings; the logo's "Pop" carries the spectrum gradient.
+- **Surfaces:** flat panels at 4 to 8% white over ink with a 1px hairline edge and one deep soft shadow.
+- **Actions:** one bright primary per screen (near-white `#F5F3FF` with ink text). Secondary actions are quiet
+  glass with a coloured icon. Danger is solid pink.
+- **Spectrum:** `--spectrum` (pink, amber, mint, sky, violet) marks progress: bars, score track, header accents.
+- **Gems:** faceted jewels with a diagonal body gradient, a bright table, a light rim, a sparkle and a glow in
+  their own colour. Every colour keeps its own shape.
+- **Juice:** each popped gem sends out a ring in its colour plus shards; the pop sound has a click transient
+  and gains a harmony from the third combo on. Haptics stay on impact only.
+
 ## What the category leaders do
 
 The research covers the top-grossing match-3 games of 2025 and 2026: Royal Match, Royal Kingdom, Candy Crush

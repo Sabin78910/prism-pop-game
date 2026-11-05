@@ -90,6 +90,8 @@ export function GameCanvas(props: Props) {
     grid: props.grid,
     sprites: new Map<number, Sprite>(),
     particles: [] as Particle[],
+    /** Expanding colour rings, one per popped gem: the satisfying "pop" read at a glance. */
+    rings: [] as { x: number; y: number; color: string; t: number }[],
     texts: [] as FloatText[],
     fx: [] as { e: Effect; age: number }[],
     busy: false,
@@ -155,7 +157,7 @@ export function GameCanvas(props: Props) {
       const p = propsRef.current;
       const hintOn = !s.busy && now - s.lastInput > hintDelay(s.pace);
       const key = `${s.selected?.r},${s.selected?.c}|${s.busy}|${hintOn}|${p.reducedMotion}`;
-      const animating = moving || !!s.swapAnim || s.fx.length > 0 || s.particles.length > 0 || s.texts.length > 0 || s.shake > 0;
+      const animating = moving || !!s.swapAnim || s.fx.length > 0 || s.particles.length > 0 || s.rings.length > 0 || s.texts.length > 0 || s.shake > 0;
       // Jelly is cleared in place, so its layer is keyed on what is left rather than on the array.
       let jellyLeft = 0;
       for (const row of p.jelly) for (const j of row) jellyLeft += j;
@@ -333,6 +335,22 @@ export function GameCanvas(props: Props) {
       ctx.globalAlpha = 1;
       s.fx = s.fx.filter((f) => f.age < f.e.duration);
 
+      // pop rings
+      if (!p.reducedMotion) {
+        for (const g of s.rings) {
+          g.t += dt / 260;
+          const k = Math.min(1, g.t);
+          ctx.globalAlpha = (1 - k) * 0.9;
+          ctx.strokeStyle = g.color;
+          ctx.lineWidth = cell * 0.09 * (1 - k) + 1;
+          ctx.beginPath();
+          ctx.arc(ox + g.x * cell, oy + g.y * cell, cell * (0.25 + 0.45 * (1 - (1 - k) * (1 - k))), 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+      }
+      s.rings = p.reducedMotion ? [] : s.rings.filter((g) => g.t < 1);
+
       // particles
       for (const pt of s.particles) {
         pt.x += pt.vx * dt;
@@ -356,7 +374,7 @@ export function GameCanvas(props: Props) {
         ctx.globalAlpha = a;
         // Pops in with a little overshoot, then settles.
         const pop = p.reducedMotion ? 1 : 1 + 0.35 * Math.max(0, t.life - 0.8) * 5;
-        ctx.font = `700 ${Math.round(cell * t.size * pop)}px Fredoka, system-ui, sans-serif`;
+        ctx.font = `700 ${Math.round(cell * t.size * pop)}px Sora, system-ui, sans-serif`;
         ctx.textAlign = "center";
         ctx.lineWidth = cell * 0.12;
         ctx.strokeStyle = "#3b0a6e";
@@ -396,6 +414,7 @@ export function GameCanvas(props: Props) {
           const v = 0.002 + Math.random() * 0.004;
           s.particles.push({ x: pos.c + 0.5, y: pos.r + 0.5, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 0.002, life: 1, color, size: 0.6 + Math.random() * 0.8 });
         }
+        if (!fast) s.rings.push({ x: pos.c + 0.5, y: pos.r + 0.5, color, t: 0 });
         s.sprites.delete(gem.id);
       }
       for (const { pos } of step.thawed) {
