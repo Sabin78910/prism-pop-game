@@ -1687,3 +1687,90 @@ body {
   background: var(--spectrum);
   background-size: 320px 100%;
 }
+
+/* results: a centred moment, the score is the hero */
+.sheet:has(.result-stars) {
+  text-align: center;
+  align-items: stretch;
+}
+.sheet:has(.result-stars) .ribbon {
+  align-self: center;
+}
+.sheet:has(.result-stars) .ribbon h2 {
+  text-align: center;
+}
+.sheet:has(.result-stars) .ribbon::before {
+  margin-inline: auto;
+}
+.result-star {
+  color: rgba(255, 255, 255, 0.1);
+}
+.result-star.on {
+  color: #ffc547;
+  text-shadow: 0 0 24px rgba(255, 197, 71, 0.55);
+}
+.result__score {
+  margin: 2px 0 0 !important;
+  font-size: 52px !important;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  text-shadow: none;
+  font-variant-numeric: tabular-nums;
+}
+.result__rank {
+  margin-top: -6px !important;
+  font-size: 13px !important;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.result__rankup {
+  align-self: center;
+  padding: 6px 14px;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--tier) 16%, transparent);
+  font-size: 17px !important;
+}
+.result__best {
+  color: transparent !important;
+  background: var(--spectrum);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+.reward {
+  background: var(--surface-2);
+  border-color: var(--line-2);
+}
+
+/* settings controls */
+.switch {
+  border-color: var(--line-2);
+  background: rgba(255, 255, 255, 0.1);
+}
+.switch--on {
+  background: #f5f3ff;
+}
+.switch--on .switch__knob {
+  background: var(--primary-ink);
+}
+.seg {
+  border-color: var(--line-2);
+}
+.seg button {
+  background: transparent;
+  color: var(--ink-soft);
+}
+.seg .on {
+  background: #f5f3ff;
+  color: var(--primary-ink);
+  font-weight: 700;
+}
+.mission__bar {
+  height: 6px;
+  border: 0;
+  background: rgba(255, 255, 255, 0.08);
+}
+.mission__bar i {
+  background: var(--spectrum);
+  background-size: 260px 100%;
+}
