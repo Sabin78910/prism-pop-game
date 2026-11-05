@@ -17,7 +17,7 @@ export interface BoardTheme {
 }
 
 export const BOARD_THEMES: Record<ThemeId, BoardTheme> = {
-  classic: { tiles: ["rgba(255,255,255,0.06)", "rgba(255,255,255,0.035)"], backing: "rgba(10,2,30,0.35)", swatch: "#6B4FA8" },
+  classic: { tiles: ["rgba(120,180,255,0.17)", "rgba(120,180,255,0.08)"], backing: "rgba(6,20,64,0.6)", swatch: "#6B4FA8" },
   caves: { tiles: ["rgba(62,224,255,0.16)", "rgba(62,224,255,0.07)"], backing: "rgba(4,20,40,0.55)", swatch: "#3EE0FF" },
   garden: { tiles: ["rgba(255,111,181,0.16)", "rgba(255,111,181,0.07)"], backing: "rgba(36,6,34,0.55)", swatch: "#FF6FB5" },
   frost: { tiles: ["rgba(200,236,255,0.2)", "rgba(200,236,255,0.09)"], backing: "rgba(8,24,44,0.55)", swatch: "#A8E4FF" },

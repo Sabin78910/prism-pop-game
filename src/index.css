@@ -1774,3 +1774,147 @@ body {
   background: var(--spectrum);
   background-size: 260px 100%;
 }
+
+/* ===== Prism Noir (Nov 2026 redesign) =====
+   Ink stage, hairline glass panels, one spectral gradient for the main action, Sora display type without
+   cartoon outlines. The gems stay the brightest, most saturated thing on screen. */
+:root {
+  --night-900: #0b0a14;
+  --night-800: #12101f;
+  --panel-a: #1a1729;
+  --panel-b: #121020;
+  --panel-edge: rgba(255, 255, 255, 0.1);
+  --ink-soft: #b9b4cf;
+  --outline: #07060d;
+  --spectral: linear-gradient(115deg, #8b5cff 0%, #5b7cff 45%, #19c8ff 100%);
+  --display: Sora, "Noto Sans Devanagari", system-ui, sans-serif;
+  --r-btn: 16px;
+  --r-panel: 24px;
+}
+.display,
+.btn,
+.logo,
+.ribbon h2,
+.hud__num,
+.goal__count,
+.pill__value,
+.node,
+.score__num {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  -webkit-text-stroke: 0;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+}
+.scenery--art {
+  filter: saturate(0.7) brightness(0.5);
+}
+.btn {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  -webkit-text-stroke-width: 0;
+  text-shadow: none;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--c) 92%, #fff), color-mix(in srgb, var(--c) 82%, #000));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 10px 24px color-mix(in srgb, var(--c) 28%, transparent), 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+.btn:not(.btn--blue):not(.btn--gold):not(.btn--danger):not(.btn--ghost) {
+  --c: #6a6cff;
+  background: var(--spectral);
+}
+.btn:active:not(:disabled) {
+  transform: translateY(1px) scale(0.97);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 4px 10px rgba(0, 0, 0, 0.35);
+}
+.btn--gold {
+  color: #2a1a00;
+}
+.btn--ghost {
+  --c: #2a2640;
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.btn--play small,
+.round .icon {
+  -webkit-text-stroke-width: 0;
+  filter: none;
+}
+.panel {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015)),
+    color-mix(in srgb, var(--night-900) 82%, transparent);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 24px 48px rgba(0, 0, 0, 0.5);
+}
+.modal {
+  background: rgba(6, 5, 12, 0.78);
+}
+.btn--blue {
+  --c: #2f6fe0;
+}
+
+/* ===== Crystal Blue (Nov 2026, from leo's mockup) =====
+   Bright blue crystal cave, glossy blue panels with a light rim, deep navy board cells, round glossy
+   boosters. Overrides the Prism Noir layer above. */
+:root {
+  --night-900: #0a1f5c;
+  --night-800: #12307f;
+  --blue-hi: #4f8dff;
+  --blue-mid: #2a63e6;
+  --blue-lo: #163ea8;
+  --rim: rgba(170, 210, 255, 0.6);
+}
+.scenery--art {
+  filter: hue-rotate(-38deg) saturate(1.2) brightness(1.05);
+}
+.panel {
+  border: 2px solid var(--rim);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--blue-mid) 92%, transparent), color-mix(in srgb, var(--blue-lo) 92%, transparent));
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.35), inset 0 -3px 0 rgba(4, 18, 70, 0.35), 0 14px 30px rgba(4, 14, 60, 0.5);
+}
+.hud__moves {
+  border: 2px solid var(--rim);
+  background: linear-gradient(180deg, var(--blue-hi), var(--blue-lo));
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45), 0 6px 16px rgba(4, 14, 60, 0.5);
+}
+.board {
+  border: 3px solid var(--rim);
+  background: linear-gradient(180deg, rgba(14, 40, 120, 0.92), rgba(8, 26, 86, 0.95));
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.25), 0 0 0 4px rgba(40, 100, 230, 0.55), 0 20px 40px rgba(4, 14, 60, 0.55);
+}
+.booster {
+  border: 2px solid var(--rim);
+  color: #ffd23f;
+  background: radial-gradient(circle at 40% 28%, #6aa2ff, var(--blue-mid) 55%, var(--blue-lo));
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.4), inset 0 -4px 0 rgba(4, 18, 70, 0.4), 0 6px 14px rgba(4, 14, 60, 0.5);
+}
+.booster .icon {
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35));
+}
+.round,
+.btn--ghost {
+  --c: var(--blue-mid);
+  background: linear-gradient(180deg, var(--blue-hi), var(--blue-lo));
+  border: 2px solid var(--rim);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.4), 0 6px 14px rgba(4, 14, 60, 0.45);
+}
+.tab--on {
+  background: linear-gradient(180deg, var(--blue-hi), var(--blue-lo));
+  box-shadow: 0 0 0 2px var(--rim), inset 0 2px 0 rgba(255, 255, 255, 0.35);
+}
+.modal {
+  background: rgba(4, 14, 50, 0.7);
+}
+/* Bright blue cave light on the scene (main dropped the painted art). */
+:root {
+  --ink-bg: #0c2470;
+}
+.scenery {
+  background:
+    radial-gradient(70% 45% at 50% -5%, rgba(120, 190, 255, 0.55), transparent 70%),
+    radial-gradient(40% 35% at 0% 60%, rgba(150, 120, 255, 0.35), transparent 70%),
+    radial-gradient(40% 35% at 100% 70%, rgba(90, 210, 255, 0.3), transparent 70%),
+    radial-gradient(80% 40% at 50% 110%, rgba(40, 90, 220, 0.6), transparent 70%),
+    linear-gradient(180deg, #1d4fd0, #0c2470 70%);
+}
