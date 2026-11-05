@@ -28,4 +28,6 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      - name: Startup budget (gzipped JS + CSS on first paint)
+        run: node scripts/check-budget.mjs 115
       - run: npm audit --audit-level=high --omit=dev
